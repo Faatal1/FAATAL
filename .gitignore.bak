@@ -1,4 +1,5 @@
-
+# Dependências do Node
+node_modules/
 
 # Arquivos de sessão do Baileys
 sessao/
