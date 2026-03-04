@@ -37,7 +37,7 @@ iniciarSpinner,
 finalizarSpinner
 } = require('./arquivos/lib/functions');
 
-const { checkAndApplyUpdates } = require('./autoupdate');
+const { checkAndApplyUpdates } = require('./arquivos/lib/autoupdate');
 
 
 
@@ -313,7 +313,7 @@ console.log("⚠ Socket já ativo — ignorando duplicação");
 return;
 }
 
-// 🔄 VERIFICAÇÃO DE ATUALIZAÇÃO AUTOMÁTICA GLOBAL
+// 🔄 VERIFICAÇÃO DE ATUALIZAÇÕES 
 // Se houver atualização, o bot faz o pull e encerra o processo para o start.sh reiniciar
 const updated = await checkAndApplyUpdates();
 if (updated) {
