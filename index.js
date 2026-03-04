@@ -37,7 +37,7 @@ iniciarSpinner,
 finalizarSpinner
 } = require('./arquivos/lib/functions');
 
-const { checkAndApplyUpdates } = require('./arquivos/lib/autoupdate');
+const { checkAndApplyUpdates } = require('./autoupdate');
 
 
 
