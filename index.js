@@ -68,6 +68,15 @@ if (!fs.existsSync('./tmp')) {
 fs.mkdirSync('./tmp')
 }
 
+
+
+
+function lerHorario() {
+    const caminho = "./arquivos/config/horario_gp.json";
+    if (!fs.existsSync(caminho)) return {};
+    return JSON.parse(fs.readFileSync(caminho));
+}
+
 //━━━━━━━━━━━━━━━━━━
 // 🎨 DESIGN DO PACK
 //━━━━━━━━━━━━━━━━━━
@@ -506,6 +515,83 @@ jaPareou = true;
                 
             
             await mostrarBoot();
+
+
+//━━━━━━━━━━━━━━━━━━
+// FUNÇÃO PARA LER HORÁRIO 
+//━━━━━━━━━━━━━━━━━━
+
+setInterval(async () => {
+
+    const db = lerHorario();
+
+    const agora = new Date();
+    const horaAtual =
+        String(agora.getHours()).padStart(2, "0") +
+        ":" +
+        String(agora.getMinutes()).padStart(2, "0");
+
+    for (const grupo in db) {
+
+        try {
+
+            // 🔒 FECHAR GRUPO
+            if (db[grupo].fechar === horaAtual) {
+
+                const fs = require("fs");
+
+                await client.groupSettingUpdate(
+                    grupo,
+                    "announcement"
+                );
+
+                const caminhoGif = "./arquivos/fotos/fechargp.mp4";
+
+                if (fs.existsSync(caminhoGif)) {
+
+                    await client.sendMessage(grupo, {
+                        video: fs.readFileSync(caminhoGif),
+                        gifPlayback: true,
+                        caption:
+`🔒 O grupo foi fechado automaticamente.
+⏰ Horário programado atingido.`
+                    });
+
+                } else {
+
+                    await client.sendMessage(grupo, {
+                        text:
+`🔒 O grupo foi fechado automaticamente.
+⏰ Horário programado atingido.`
+                    });
+
+                }
+
+            }
+
+            // 🔓 ABRIR GRUPO
+            if (db[grupo].abrir === horaAtual) {
+
+                await client.groupSettingUpdate(
+                    grupo,
+                    "not_announcement"
+                );
+
+                await client.sendMessage(grupo, {
+                    text:
+`🟢 O grupo foi aberto novamente.
+💬 As mensagens já estão liberadas!`
+                });
+
+            }
+
+        } catch (err) {
+            console.log("Erro no sistema de horário:", err);
+        }
+
+    }
+
+}, 60000);
 
 
 //━━━━━━━━━━━━━━━━━━

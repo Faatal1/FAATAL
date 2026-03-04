@@ -12,6 +12,23 @@ const { areJidsSameUser } = require('@whiskeysockets/baileys');
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
 //━━━━━━━━━━━━━━━━━━
+// CONFIG ABRIR E FECHAR GP
+//━━━━━━━━━━━━━━━━━━
+
+function lerHorario() {
+    const caminho = "./arquivos/config/horario_gp.json";
+    if (!fs.existsSync(caminho)) return {};
+    return JSON.parse(fs.readFileSync(caminho));
+}
+
+function salvarHorario(data) {
+    fs.writeFileSync(
+        "./arquivos/config/horario_gp.json",
+        JSON.stringify(data, null, 2)
+    );
+}
+
+//━━━━━━━━━━━━━━━━━━
 // 🧩 AUTO STICKER DB
 //━━━━━━━━━━━━━━━━━━
 
@@ -2470,6 +2487,52 @@ const text = args.join(" ");
 ━━━━━━━━━━━━━━━━━━━━━━━━━━*/
 
 switch (comando) {
+
+case "fechargp": {
+
+    if (!isGroup) return reply("Esse comando é apenas para grupos.");
+    if (!isAdmin && !soDono) return reply("Apenas administradores.");
+
+    if (!args[0])
+        return reply("Use: fechargp 00:00");
+
+    const horario = args[0];
+
+    const db = lerHorario();
+
+    if (!db[from]) db[from] = {};
+
+    db[from].fechar = horario;
+
+    salvarHorario(db);
+
+    reply(`🔒 Grupo será fechado automaticamente às ${horario}.`);
+
+}
+break;
+
+case "abrirgp": {
+
+    if (!isGroup) return reply("Esse comando é apenas para grupos.");
+    if (!isAdmin && !soDono) return reply("Apenas administradores.");
+
+    if (!args[0])
+        return reply("Use: abrirgp 07:00");
+
+    const horario = args[0];
+
+    const db = lerHorario();
+
+    if (!db[from]) db[from] = {};
+
+    db[from].abrir = horario;
+
+    salvarHorario(db);
+
+    reply(`🔓 Grupo será aberto automaticamente às ${horario}.`);
+
+}
+break;
 
 case "atualizar": {
     if (!soDono) return enviar("❌ Apenas o dono pode usar este comando.");
@@ -8733,7 +8796,7 @@ case 'g': { // Comando autoritário adaptado
         const WebP = require('node-webpmux')
         const webpMaker = new WebP.Image()
 
-        // 🧠 Pack + assinatura (Exatamente como você pediu)
+        // 🧠 Pack + assinatura 
         const packName = "🚬 𝚁𝚘𝚞𝚋𝚊 𝚗ã𝚘 𝚜𝚞𝚊 𝚙𝚞𝚝𝚒𝚗𝚑𝚊! 𝙸'𝚖 𝚏𝚊𝚊𝚝𝚊𝚕!"
         const megaEspaco = "\u200B\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n".repeat(12000) 
 
