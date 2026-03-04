@@ -2471,6 +2471,27 @@ const text = args.join(" ");
 
 switch (comando) {
 
+case "atualizar": {
+    if (!soDono) return enviar("❌ Apenas o dono pode usar este comando.");
+    await enviar("🔄 *Verificando atualizações globais...*");
+    try {
+        const { checkAndApplyUpdates } = require('./autoupdate');
+        const updated = await checkAndApplyUpdates();
+        if (updated) {
+            await enviar("✅ *Atualização encontrada e aplicada! O bot será reiniciado em instantes...*");
+            setTimeout(() => {
+                process.exit(0);
+            }, 2000);
+        } else {
+            await enviar("🙌 *O bot já está na versão mais recente disponível.*");
+        }
+    } catch (err) {
+        console.error(err);
+        await enviar("❌ *Erro ao tentar atualizar:* " + err.message);
+    }
+    break;
+}
+
 case 'autosticker': {
     if (!isGroup) return reply("Somente em grupos.");
     if (!isAdmin && !soDono) return reply("Apenas administradores.");
