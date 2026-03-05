@@ -11,6 +11,164 @@ const path = require('path');
 const { areJidsSameUser } = require('@whiskeysockets/baileys');
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
+//JOGO DA FORCA 
+let jogoForca = {}
+
+const palavrasForca = [
+
+{ palavra:"cachorro", dica:"Animal doméstico que late" },
+{ palavra:"gato", dica:"Animal que gosta de leite" },
+{ palavra:"banana", dica:"Fruta amarela" },
+{ palavra:"carro", dica:"Veículo usado para transporte" },
+{ palavra:"celular", dica:"Usado para mandar mensagem" },
+{ palavra:"escola", dica:"Lugar onde se estuda" },
+{ palavra:"pizza", dica:"Comida redonda muito famosa" },
+{ palavra:"praia", dica:"Lugar com areia e mar" },
+{ palavra:"chuva", dica:"Água que cai do céu" },
+{ palavra:"computador", dica:"Máquina usada para trabalhar ou jogar" },
+{ palavra:"bicicleta", dica:"Veículo de duas rodas" },
+{ palavra:"janela", dica:"Fica na parede da casa e dá pra ver fora" },
+{ palavra:"porta", dica:"Usada para entrar ou sair de um lugar" },
+{ palavra:"cadeira", dica:"Usada para sentar" },
+{ palavra:"mesa", dica:"Móvel usado para colocar coisas ou comer" },
+{ palavra:"caderno", dica:"Usado na escola para escrever" },
+{ palavra:"lapis", dica:"Usado para escrever ou desenhar" },
+{ palavra:"borracha", dica:"Usada para apagar o lápis" },
+{ palavra:"televisao", dica:"Aparelho usado para assistir programas" },
+{ palavra:"controle", dica:"Usado para mudar canal da TV" },
+{ palavra:"geladeira", dica:"Usada para guardar comida fria" },
+{ palavra:"fogao", dica:"Usado para cozinhar comida" },
+{ palavra:"arroz", dica:"Comida muito comum no almoço" },
+{ palavra:"feijao", dica:"Comida que combina com arroz" },
+{ palavra:"chocolate", dica:"Doce feito de cacau" },
+{ palavra:"sorvete", dica:"Doce gelado muito popular" },
+{ palavra:"abacaxi", dica:"Fruta com coroa e casca espinhosa" },
+{ palavra:"melancia", dica:"Fruta grande e cheia de água" },
+{ palavra:"morango", dica:"Fruta pequena vermelha" },
+{ palavra:"uva", dica:"Fruta pequena usada para fazer vinho" }
+
+]
+
+function desenharForca(erros){
+
+const fases = [
+
+`
+╭─────╮
+│
+│
+│
+│
+┴
+🙂
+`,
+
+`
+╭─────╮
+│     😐
+│
+│
+│
+┴
+`,
+
+`
+╭─────╮
+│     😕
+│     │
+│
+│
+┴
+`,
+
+`
+╭─────╮
+│     😟
+│    \\│
+│
+│
+┴
+`,
+
+`
+╭─────╮
+│     😰
+│    \\│/
+│
+│
+┴
+`,
+
+`
+╭─────╮
+│     😨
+│    \\│/
+│      |
+│
+┴
+`,
+
+`
+╭─────╮
+│     💀
+│    \\│/
+│      |
+│     / \\
+┴
+`
+
+]
+
+return fases[erros]
+
+}
+
+function mostrarPalavra(palavra, letras){
+
+let resultado = ""
+
+for(let l of palavra){
+
+if(letras.includes(l))
+resultado += l + " "
+else
+resultado += "▢ "
+
+}
+
+return resultado
+
+}
+
+// JOGO DA VELHA 
+const jogoVelha = {};
+
+function criarTabuleiro(t) {
+return `
+╭─ 🎮 JOGO DA VELHA ─╮
+
+ ${t[0]} │ ${t[1]} │ ${t[2]}
+ ${t[3]} │ ${t[4]} │ ${t[5]}
+ ${t[6]} │ ${t[7]} │ ${t[8]}
+
+╰──────────────────╯
+`
+}
+
+function verificarVitoria(t,s){
+return (
+(t[0]==s&&t[1]==s&&t[2]==s)||
+(t[3]==s&&t[4]==s&&t[5]==s)||
+(t[6]==s&&t[7]==s&&t[8]==s)||
+(t[0]==s&&t[3]==s&&t[6]==s)||
+(t[1]==s&&t[4]==s&&t[7]==s)||
+(t[2]==s&&t[5]==s&&t[8]==s)||
+(t[0]==s&&t[4]==s&&t[8]==s)||
+(t[2]==s&&t[4]==s&&t[6]==s)
+)
+}
+
+
 //━━━━━━━━━━━━━━━━━━
 // CONFIG ABRIR E FECHAR GP
 //━━━━━━━━━━━━━━━━━━
@@ -1069,84 +1227,42 @@ punishedUsers.clear();
 
 // 🔹 LISTA DE COMANDOS
 const commandList = [
-"ping",
-"menu",
-"transmitir",
-"tm",
-"infogp",
-"regras",
-"linkgp",
-"getlid",
-"play",
-"tiktok",
-"ytmp3",
-"ytmp4",
-"Pinterest",
-"fotobot",
-"insta",
-"ttkmusic",
-"nick",
-"gado",
-"sticker",
-"tmadms",
-"adms",
-"marcar",
-"revelar",
-"take",
-"rename",
-"gerarlink",
-"criargp",
-"gerarcpf",
-"ban",
-"mutar",
-"desmutar",
-"add",
-"figuperfil",
-"fotoperfil",
-"toimg",
-"togif",
-"promover",
-"rebaixar",
-"adverter",
-"rmadv",
-"banirfigu",
-"desbanfigu",
-"gemini",
-"faatal",
-"brat",
-"bratvid",
-"printsite",
-"afk",
-"infoff",
-"dataconta",
-"setprefix",
-"nomedono",
-"nomebot",
-"aluguel-global",
-"addaluguel",
-"rmaluguel",
-"bcgp",
-"blockia",
-"desblockia",
-"blockcmd",
-"unblockcmd",
-"listblockcmd",
-"reiniciar",
-"antiflood",
-"antispam",
-"antilink",
-"antilinkgp",
-"antibot",
-"antipalavrao",
-"antifigu",
-"antimg",
-"antivideo",
-"antiaudio",
-"edits",
-"editjj",
-"editnt",
-"editff"
+    "ping", "menu", "transmitir", "tm", "infogp",
+    "regras", "linkgp", "getlid", "play", "tiktok",
+    "ytmp3", "ytmp4", "Pinterest", "fotobot", "insta",
+    "ttkmusic", "nick", "gado", "sticker", "tmadms",
+    "adms", "marcar", "revelar", "take", "rename",
+    "gerarlink", "criargp", "gerarcpf", "ban", "mutar",
+    "desmutar", "add", "figuperfil", "fotoperfil", "toimg",
+    "togif", "promover", "rebaixar", "adverter", "rmadv",
+    "banirfigu", "desbanfigu", "gemini", "faatal", "brat",
+    "bratvid", "printsite", "afk", "infoff", "dataconta",
+    "setprefix", "nomedono", "nomebot", "aluguel-global", "addaluguel",
+    "rmaluguel", "bcgp", "blockia", "desblockia", "blockcmd",
+    "unblockcmd", "listblockcmd", "reiniciar", "antiflood", "antispam",
+    "antilink", "antilinkgp", "antibot", "antipalavrao", "antifigu",
+    "antimg", "antivideo", "antiaudio", "edits", "editjj",
+    "editnt", "editff", "abrirgp", "aceitar", "addvip",
+    "alg", "atp", "attp", "atualizar", "autosticker",
+    "bemvindo", "bin", "botoff", "boton", "cancelar",
+    "casal", "cep", "cnpj", "comer", "corno",
+    "cpf", "criador", "ddd", "espancar", "fechargp",
+    "fig18", "figaleatori", "figanime", "figbts", "figcoreana",
+    "figdesenho", "figemoji", "figmeme", "figraiva", "figroblox",
+    "g", "gay", "imgai", "jdv", "limpar",
+    "listavip", "matar", "menuadm", "menubn", "menudono",
+    "menudown", "menufig", "menuvip", "nome", "nome2",
+    "placa", "plaq", "plaq1", "plaq2", "plaq3",
+    "plaq4", "plaq5", "plaq6", "plaq7", "plaq8",
+    "plaq9", "rankativo", "rankcorno", "rankego", "rankgado",
+    "rankgay", "rankgostoso", "rankinativo", "rankinteligente", "ranklindo",
+    "rankpegador", "rankpobre", "rankputa", "rankrico", "recusar",
+    "resetgp", "resetprefixgp", "rg", "rmvip", "score",
+    "serasa", "servip", "setprefixgp", "sex", "tapa",
+    "telefone", "ttk", "ttk2", "vergp", "abracar", "louca", "carinho",
+    "forca", "cancelarforca"
 ];
+
 
 
 // =============================
@@ -1312,10 +1428,6 @@ if (isGroup) {
     const ehComando = textoMsg.startsWith(prefix);
     registrarAtividade(from, sender, info.pushName, ehComando);
 }
-
-
-
-
 
 
 
@@ -2065,7 +2177,6 @@ info.message.conversation ||
 info.message.extendedTextMessage?.text ||
 '';
 
-
 const isCmd = body.startsWith(prefix);
 registrarAtividade(from, sender, isCmd);
 
@@ -2076,6 +2187,160 @@ if (isGroup) {
     if (gruposAlugados.includes(from) && !soDono) {
         return; // bot ignora completamente
     }
+}
+
+// 🎮 SISTEMA DO JOGO DA FORCA 
+if(jogoForca[from] && !isCmd){
+
+const jogo = jogoForca[from]
+
+const letra = body.toLowerCase()
+
+if(!/^[a-z]$/.test(letra)) return
+
+if(jogo.letras.includes(letra) || jogo.erradas.includes(letra))
+return reply("⚠️ Essa letra já foi usada")
+
+if(jogo.palavra.includes(letra)){
+
+jogo.letras.push(letra)
+
+await client.sendMessage(from,{
+text:`✔ @${sender.split("@")[0]} acertou a letra *${letra.toUpperCase()}*!`,
+mentions:[sender]
+})
+
+}else{
+
+jogo.erradas.push(letra)
+jogo.erros++
+
+await client.sendMessage(from,{
+text:`❌ @${sender.split("@")[0]} errou tentando a letra *${letra.toUpperCase()}*!`,
+mentions:[sender]
+})
+
+}
+
+if(!mostrarPalavra(jogo.palavra,jogo.letras).includes("▢")){
+
+await client.sendMessage(from,{
+text:
+`🏆 *PALAVRA DESCOBERTA!*
+
+🎉 @${sender.split("@")[0]} acertou a palavra!
+
+🔤 Palavra:
+${jogo.palavra}`,
+mentions:[sender]
+})
+
+delete jogoForca[from]
+return
+}
+
+if(jogo.erros >= 6){
+
+await client.sendMessage(from,{
+text:
+`💀 *VOCÊ PERDEU*
+
+A palavra correta era:
+${jogo.palavra}`
+})
+
+delete jogoForca[from]
+return
+}
+
+await client.sendMessage(from,{
+text:
+`🎮 *JOGO DA FORCA*
+
+${desenharForca(jogo.erros)}
+
+💡 Dica
+${jogo.dica}
+
+🔤 Palavra
+${mostrarPalavra(jogo.palavra,jogo.letras)}
+
+❌ Letras erradas
+${jogo.erradas.join(", ")}
+
+💀 Erros: ${jogo.erros}/6
+
+Digite outra letra`
+})
+
+}
+
+// 🎮 SISTEMA DE JOGADAS DO JOGO DA VELHA
+
+if (jogoVelha[from]?.status === "jogando" && !isCmd) {
+
+const jogo = jogoVelha[from];
+
+if(sender !== jogo.turno) return;
+
+const pos = parseInt(body)-1;
+
+if(isNaN(pos)||pos<0||pos>8) return;
+
+if(["❌","⭕"].includes(jogo.tabuleiro[pos])) return;
+
+const simbolo =
+jogo.turno===jogo.desafiante?"❌":"⭕";
+
+jogo.tabuleiro[pos]=simbolo;
+
+if(verificarVitoria(jogo.tabuleiro,simbolo)){
+
+await client.sendMessage(from,{
+text:
+`🏆 *TEMOS UM VENCEDOR*
+
+👑 @${sender.split("@")[0]} venceu!
+
+${criarTabuleiro(jogo.tabuleiro)}`,
+mentions:[sender]
+})
+
+delete jogoVelha[from]
+return
+}
+
+if(!jogo.tabuleiro.some(c=>!["❌","⭕"].includes(c))){
+
+await client.sendMessage(from,{
+text:
+`🤝 *EMPATE*
+
+${criarTabuleiro(jogo.tabuleiro)}`
+})
+
+delete jogoVelha[from]
+return
+}
+
+jogo.turno =
+jogo.turno===jogo.desafiante
+?jogo.desafiado
+:jogo.desafiante
+
+await client.sendMessage(from,{
+text:
+`🎮 *JOGO DA VELHA*
+
+${criarTabuleiro(jogo.tabuleiro)}
+
+🎯 Vez de jogar:
+➜ @${jogo.turno.split("@")[0]}
+
+📌 Escolha um número de *1 a 9*`,
+mentions:[jogo.turno]
+})
+
 }
 
 
@@ -2487,6 +2752,467 @@ const text = args.join(" ");
 ━━━━━━━━━━━━━━━━━━━━━━━━━━*/
 
 switch (comando) {
+
+case "cita": {
+
+if (!isGroup) return reply("📢 Esse comando funciona apenas em grupos.");
+
+if (!isAdmin && !soDono)
+return reply("🚫 Apenas administradores podem usar esse comando.");
+
+// mensagem digitada
+let mensagem = text;
+
+// mensagem marcada
+const msgMarcada =
+info.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation ||
+info.message?.extendedTextMessage?.contextInfo?.quotedMessage?.extendedTextMessage?.text;
+
+if (!mensagem && msgMarcada) {
+mensagem = msgMarcada;
+}
+
+if (!mensagem)
+return reply(`✏️ Use assim:\n${prefix}cita sua mensagem\n\nou responda uma mensagem.`);
+
+const groupMetadata = await client.groupMetadata(from);
+
+const membros = groupMetadata.participants
+.map(p => p.id)
+.filter(id => id !== client.user.id);
+
+// 📢 reação
+await client.sendMessage(from,{
+react:{text:"📢", key:info.key}
+});
+
+// envia mensagem citando todos invisivelmente
+await client.sendMessage(from,{
+text: mensagem,
+mentions: membros
+},{quoted: info});
+
+}
+break;
+
+case "cancelarforca": {
+
+if(!jogoForca[from])
+return reply("❌ Não há jogo da forca acontecendo")
+
+// 🛑 reação automática
+await client.sendMessage(from,{
+react:{text:"🛑", key:info.key}
+})
+
+delete jogoForca[from]
+
+await client.sendMessage(from,{
+text:"🛑 *Jogo da forca cancelado!*"
+},{quoted:info})
+
+}
+break
+
+case "forca": {
+
+if(!isGroup)
+return reply("🎮 Esse jogo funciona apenas em grupos.")
+
+if(jogoForca[from])
+return reply("⚠️ Já existe um jogo da forca acontecendo")
+
+// 🎮 reação automática
+await client.sendMessage(from,{
+react:{text:"🎮", key:info.key}
+})
+
+const sorteio =
+palavrasForca[Math.floor(Math.random()*palavrasForca.length)]
+
+const palavra = sorteio.palavra
+const dica = sorteio.dica
+
+jogoForca[from] = {
+palavra,
+dica,
+letras:[],
+erradas:[],
+erros:0
+}
+
+await client.sendMessage(from,{
+text:
+`🎮 *JOGO DA FORCA*
+
+${desenharForca(0)}
+
+💡 Dica
+${dica}
+
+🔤 Palavra
+${mostrarPalavra(palavra,[])}
+
+❌ Letras erradas
+Nenhuma
+
+💀 Erros: 0/6
+
+Digite uma letra`
+},{quoted:info})
+
+}
+break
+
+case 'carinho': {
+    if (!isGroup) return reply("💞 Esse comando só funciona em grupos.");
+
+    const alvo =
+        mentioned[0] ||
+        (info.message?.extendedTextMessage?.contextInfo?.participant);
+
+    if (!alvo)
+        return reply("💞 Marque alguém ou responda a mensagem de quem você quer dar carinho.");
+
+    const autor = info.key.participant || info.key.remoteJid;
+
+    const nomeAlvo = alvo.split("@")[0];
+
+    // 💞 REAÇÃO AUTOMÁTICA
+    await client.sendMessage(from, {
+        react: { text: "💞", key: info.key }
+    });
+
+    const frasesCarinho = [
+        "deu um carinho fofinho em",
+        "fez um cafuné cheio de amor em",
+        "deu muito carinho em",
+        "encheu de carinho",
+        "não resistiu e fez carinho em",
+        "foi lá só pra dar carinho em",
+        "deu um carinho bem gostoso em",
+        "abraçou e fez carinho em",
+        "deu um carinho cheio de amor em",
+        "chegou devagar e fez carinho em"
+    ];
+
+    const frase = frasesCarinho[Math.floor(Math.random() * frasesCarinho.length)];
+
+    const mensagem = `💞 Você ${frase} @${nomeAlvo}... 😖💞`;
+
+    const fs = require('fs');
+    const caminhoGif = "./arquivos/fotos/carinho.mp4";
+
+    try {
+        if (fs.existsSync(caminhoGif)) {
+            await client.sendMessage(from, {
+                video: fs.readFileSync(caminhoGif),
+                gifPlayback: true,
+                caption: mensagem,
+                mentions: [alvo]
+            }, { quoted: info });
+        } else {
+            await client.sendMessage(from, {
+                text: mensagem,
+                mentions: [alvo]
+            }, { quoted: info });
+        }
+    } catch (err) {
+        console.log("Erro no comando carinho:", err);
+        await client.sendMessage(from, {
+            text: mensagem,
+            mentions: [alvo]
+        }, { quoted: info });
+    }
+}
+break;
+
+case 'louca':
+case 'louça': {
+    if (!isGroup) return reply("🍽️ Esse comando só funciona em grupos.");
+
+    const alvo =
+        mentioned[0] ||
+        (info.message?.extendedTextMessage?.contextInfo?.participant);
+
+    if (!alvo)
+        return reply("🍽️ Marque alguém ou responda a mensagem de quem vai lavar a louça.");
+
+    const autor = info.key.participant || info.key.remoteJid;
+
+    const nomeAutor = autor.split("@")[0];
+    const nomeAlvo = alvo.split("@")[0];
+
+    // 🧽 REAÇÃO AUTOMÁTICA
+    await client.sendMessage(from, {
+        react: { text: "🍽️", key: info.key }
+    });
+
+    const frasesLouca = [
+        "acabou de colocar",
+        "mandou imediatamente",
+        "não perdoou e mandou",
+        "decretou que hoje quem lava a louça é",
+        "decidiu que a pia é responsabilidade de",
+        "botou pra trabalhar",
+        "ordenou que agora quem lava é"
+    ];
+
+    const frase = frasesLouca[Math.floor(Math.random() * frasesLouca.length)];
+
+    const mensagem = `🍽️ @${nomeAutor} ${frase} @${nomeAlvo} pra lavar a louça! 🧼`;
+
+    const fs = require('fs');
+    const caminhoGif = "./arquivos/fotos/louca.mp4";
+
+    try {
+        if (fs.existsSync(caminhoGif)) {
+            await client.sendMessage(from, {
+                video: fs.readFileSync(caminhoGif),
+                gifPlayback: true,
+                caption: mensagem,
+                mentions: [autor, alvo]
+            }, { quoted: info });
+        } else {
+            await client.sendMessage(from, {
+                text: mensagem,
+                mentions: [autor, alvo]
+            }, { quoted: info });
+        }
+    } catch (err) {
+        console.log("Erro no comando louça:", err);
+        await client.sendMessage(from, {
+            text: mensagem,
+            mentions: [autor, alvo]
+        }, { quoted: info });
+    }
+}
+break;
+
+case 'abracar':
+case 'abraco': {
+    if (!isGroup) return reply("💖 Esse comando só funciona em grupos.");
+
+    const alvo =
+        mentioned[0] ||
+        (info.message?.extendedTextMessage?.contextInfo?.participant);
+
+    if (!alvo)
+        return reply("💖 Marque alguém ou responda a mensagem de quem você quer abraçar.");
+
+    const autor = info.key.participant || info.key.remoteJid;
+
+    const lidDono = String(data.LidDono).replace(/\D/g,'');
+    const lidAlvo = alvo.split("@")[0].replace(/\D/g,'');
+
+    const nomeAutor = autor.split("@")[0];
+    const nomeAlvo = alvo.split("@")[0];
+
+    // 💖 REAÇÃO AUTOMÁTICA
+    await client.sendMessage(from, {
+        react: { text: "🫂", key: info.key }
+    });
+
+    const frasesFofas = [
+        "deu um abraço bem apertadinho em",
+        "espalhou carinho com um abraço em",
+        "deixou o dia mais quentinho abraçando",
+        "deu um abraço cheio de amor em",
+        "não resistiu e correu para abraçar",
+        "deu o melhor abraço do mundo em",
+        "estava com saudades e deu um abraço em",
+        "deu um abraço bem fofinho em"
+    ];
+
+    const frase = frasesFofas[Math.floor(Math.random() * frasesFofas.length)];
+
+    const mensagem = `✨ @${nomeAutor} ${frase} @${nomeAlvo} 💖`;
+
+    const fs = require('fs');
+    const caminhoGif = "./arquivos/fotos/abracar.mp4"; // Certifique-se que o arquivo existe com este nome
+
+    try {
+        if (fs.existsSync(caminhoGif)) {
+            await client.sendMessage(from, {
+                video: fs.readFileSync(caminhoGif),
+                gifPlayback: true,
+                caption: mensagem,
+                mentions: [autor, alvo]
+            }, { quoted: info });
+        } else {
+            await client.sendMessage(from, {
+                text: mensagem,
+                mentions: [autor, alvo]
+            }, { quoted: info });
+        }
+    } catch (err) {
+        console.log("Erro no comando abracar:", err);
+        await client.sendMessage(from, {
+            text: mensagem,
+            mentions: [autor, alvo]
+        }, { quoted: info });
+    }
+}
+break;
+
+
+case "cancelar": {
+
+if(!jogoVelha[from])
+return reply("❌ Não há nenhum jogo em andamento.");
+await client.sendMessage(from,{
+react:{text:"🛑", key: info.key}
+})
+
+const jogo = jogoVelha[from];
+
+// apenas jogadores ou admin podem cancelar
+if(
+sender !== jogo.desafiante &&
+sender !== jogo.desafiado &&
+!isAdmin &&
+!soDono
+){
+return reply("⚠️ Apenas os jogadores ou admins podem cancelar.");
+}
+
+delete jogoVelha[from];
+
+await client.sendMessage(from,{
+text:
+`🛑 *JOGO CANCELADO*
+
+A partida de jogo da velha foi encerrada.
+
+🎮 Para iniciar outra:
+➜ ${prefix}jdv @usuario`
+},{quoted:info})
+
+}
+break;
+
+case "aceitar": {
+
+if(!jogoVelha[from])
+return reply("❌ Não há desafio pendente.");
+
+const jogo = jogoVelha[from];
+
+if(jogo.status !== "desafio")
+return reply("❌ Nenhum desafio aguardando.");
+
+if(sender !== jogo.desafiado)
+return reply("⚠️ Apenas o desafiado pode aceitar.");
+
+jogo.status = "jogando";
+
+jogo.turno =
+Math.random() < 0.5
+? jogo.desafiante
+: jogo.desafiado;
+
+jogo.tabuleiro = [
+"1️⃣","2️⃣","3️⃣",
+"4️⃣","5️⃣","6️⃣",
+"7️⃣","8️⃣","9️⃣"
+];
+await client.sendMessage(from,{
+text:
+`🎮 *JOGO INICIADO*
+
+${criarTabuleiro(jogo.tabuleiro)}
+
+🎯 Quem começa:
+@${jogo.turno.split("@")[0]}
+
+Digite o número da posição.`,
+mentions:[jogo.turno]
+})
+
+}
+break
+
+case "recusar": {
+
+if(!jogoVelha[from])
+return reply("❌ Não há desafio.");
+
+const jogo = jogoVelha[from];
+
+if(sender !== jogo.desafiado)
+return reply("⚠️ Apenas o desafiado pode recusar.");
+
+delete jogoVelha[from];
+
+await client.sendMessage(from,{
+text:"❌ O desafio foi recusado."
+})
+
+}
+break
+
+case "jdv":
+case "jogodavelha": {
+
+if(!isGroup) return reply("🎮 Esse jogo funciona apenas em grupos.");
+await client.sendMessage(from,{
+react:{text:"🎮", key: info.key}
+})
+
+const alvo =
+mentioned[0] ||
+info.message?.extendedTextMessage?.contextInfo?.participant;
+
+if(!alvo)
+return reply("🎮 Marque alguém para jogar.\n\nExemplo:\n.jdv @usuario");
+
+if(alvo === sender)
+return reply("🤡 Você não pode jogar contra você mesmo.");
+
+jogoVelha[from] = {
+status:"desafio",
+desafiante:sender,
+desafiado:alvo
+};
+
+await client.sendMessage(from,{
+text:
+`🎮 *DESAFIO DE JOGO DA VELHA*
+
+⚔️ Desafiante:
+➜ @${sender.split("@")[0]}
+
+🎯 Desafiado:
+➜ @${alvo.split("@")[0]}
+
+━━━━━━━━━━━━━━━━━━
+
+Para responder ao desafio digite:
+
+✔️ ${prefix}aceitar
+❌ ${prefix}recusar`,
+mentions:[sender,alvo]
+},{quoted:info})
+
+}
+break
+
+case "limpar": {
+
+    if (!isGroup)
+        return reply("🧹 Esse comando funciona apenas em grupos.");
+
+    if (!isAdmin && !soDono)
+        return reply("🚫 Apenas administradores podem usar esse comando.");
+
+    const linhas = "\n".repeat(250);
+
+    await client.sendMessage(from, {
+        text: `🧹 Limpando chat...${linhas}✔ Chat limpo`
+    }, { quoted: info });
+
+}
+break;
 
 case "vergp": {
 
@@ -4579,7 +5305,7 @@ case 'ranklindo': {
     ];
 
     let textoRanking =
-`┏━━━ 👑 𝐑𝐀𝐍𝐊 𝐃𝐎𝐒 𝐌𝐀𝐈𝐒 𝐁𝐎𝐍𝐈𝐓𝐎𝐒 👑 ━━━┓
+`┏━━━ 👑 𝐑𝐀𝐍𝐊 𝐃𝐎𝐒 𝐌𝐀𝐈𝐒 𝐁𝐎𝐍𝐈𝐓𝐎𝐒 ?? ━━━┓
 
 
 `;
@@ -5948,7 +6674,7 @@ case "consultarcpf": {
         if (d["cd_sit_cad"] === "2") situacao = "REGULAR";
 
         let texto = `━━━━━━━━━━━━━━━━━━\n`;
-        texto += `🔎 *CONSULTA DE CPF*\n`;
+        texto += `?? *CONSULTA DE CPF*\n`;
         texto += `━━━━━━━━━━━━━━━━━━\n\n`;
 
         texto += `👤 *Nome:* ${nome}\n`;
@@ -10454,7 +11180,23 @@ const { performance } = require("perf_hooks");
 //━━━━━━━━━━━━━━━━━━
 
 const caseFile = fs.readFileSync("./case.js", "utf8");
-const totalCmds = (caseFile.match(/case\s+['"`]/g) || []).length;
+const lines = caseFile.split('\n');
+let uniqueFunctionalities = new Set();
+let currentGroup = [];
+
+for (let line of lines) {
+    const match = line.match(/case\s+['"]([^'"]+)['"]/);
+    if (match) {
+        currentGroup.push(match[1].toLowerCase());
+    } else if (line.includes('{') || line.includes('break') || (currentGroup.length > 0 && line.trim() !== '')) {
+        if (currentGroup.length > 0) {
+            uniqueFunctionalities.add(currentGroup[0]);
+            currentGroup = [];
+        }
+    }
+}
+const totalCmds = uniqueFunctionalities.size;
+
 
 //━━━━━━━━━━━━━━━━━━
 // ⚡ VELOCIDADE CPU

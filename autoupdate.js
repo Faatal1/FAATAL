@@ -35,14 +35,13 @@ async function checkAndApplyUpdates() {
                 console.log(chalk.green('✅ Bot atualizado com sucesso.'));
                 
                 // Verifica se o package.json mudou 
-                // execSync('npm install', { stdio: 'inherit' });
+                 execSync('npm install', { stdio: 'inherit' });
                 
                 return true; // Indica que houve atualização e o bot deve reiniciar
             } catch (pullError) {
                 console.log(chalk.red('🚫 Erro ao atualizar. Tentando forçar atualização...'));
-                // Se houver conflito, podemos forçar o reset para o estado do servidor
-                // CUIDADO: Isso apaga alterações locais do cliente nos arquivos do bot
-                // execSync('git reset --hard origin/main', { stdio: 'inherit' });
+                
+                 execSync('git reset --hard origin/main', { stdio: 'inherit' });
                 return false;
             }
         } else {
