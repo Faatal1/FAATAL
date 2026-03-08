@@ -1,0 +1,42 @@
+{
+  "196066028875974@lid": {
+    "nome": "jhony",
+    "saldo": 20,
+    "itens": {
+      "picareta": 0,
+      "picareta_dur": 0,
+      "picareta_chances": 3,
+      "cassino_chances": 5,
+      "escudo": 0,
+      "cachaca": 0,
+      "cachaca_chances": 1,
+      "vinganca": 0,
+      "vinganca_chances": 1,
+      "quiz_chances": 3
+    },
+    "cooldown": {},
+    "roubos": 0,
+    "roubo_lista": [],
+    "ultimo_daily": "3/8/2026"
+  },
+  "95409074622641@lid": {
+    "nome": "◈ 𝙵𝙰𝙰𝚃𝙰𝙻",
+    "saldo": 20,
+    "itens": {
+      "picareta": 0,
+      "picareta_dur": 0,
+      "picareta_chances": 3,
+      "cassino_chances": 5,
+      "escudo": 0,
+      "cachaca": 0,
+      "cachaca_chances": 1,
+      "vinganca": 0,
+      "vinganca_chances": 1,
+      "quiz_chances": 3
+    },
+    "cooldown": {},
+    "roubos": 0,
+    "roubo_lista": [],
+    "ultimo_daily": "3/8/2026"
+  }
+}

@@ -11,6 +11,180 @@ const path = require('path');
 const { areJidsSameUser } = require('@whiskeysockets/baileys');
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
+// Função casamento 
+const pasta = "./arquivos/config"
+const arquivo = path.join(pasta, "casamentos.json")
+
+function lerCasamentos(){
+
+// cria pasta se não existir
+if(!fs.existsSync(pasta)){
+fs.mkdirSync(pasta,{recursive:true})
+}
+
+// cria arquivo se não existir
+if(!fs.existsSync(arquivo)){
+fs.writeFileSync(arquivo,"{}")
+}
+
+try{
+return JSON.parse(fs.readFileSync(arquivo))
+}catch{
+return {}
+}
+
+}
+
+function salvarCasamentos(db){
+
+// garante pasta
+if(!fs.existsSync(pasta)){
+fs.mkdirSync(pasta,{recursive:true})
+}
+
+fs.writeFileSync(arquivo,JSON.stringify(db,null,2))
+
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🎮 SISTEMA RPG
+//━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const caminhoGolds = "./arquivos/config/golds.json"
+const caminhoModoRPG = "./arquivos/config/modorpg.json"
+
+if (!fs.existsSync(caminhoGolds))
+fs.writeFileSync(caminhoGolds, JSON.stringify({}, null, 2))
+
+// RPG POR GRUPO
+if (!fs.existsSync(caminhoModoRPG))
+fs.writeFileSync(caminhoModoRPG, JSON.stringify({}, null, 2))
+
+
+function lerGolds(){
+
+try{
+
+let data = fs.readFileSync(caminhoGolds)
+
+if(!data || data.length === 0)
+return {}
+
+return JSON.parse(data)
+
+}catch{
+
+console.log("⚠️ golds.json corrompido")
+
+fs.writeFileSync(caminhoGolds, JSON.stringify({},null,2))
+
+return {}
+
+}
+
+}
+
+
+function salvarGolds(data){
+
+fs.writeFileSync(caminhoGolds, JSON.stringify(data,null,2))
+
+}
+
+
+//━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🎮 SISTEMA MODORPG POR GRUPO
+//━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function lerModoRPG(){
+
+try{
+
+return JSON.parse(fs.readFileSync(caminhoModoRPG))
+
+}catch{
+
+return {}
+
+}
+
+}
+
+
+function salvarModoRPG(data){
+
+fs.writeFileSync(caminhoModoRPG, JSON.stringify(data,null,2))
+
+}
+
+
+function rpgAtivo(grupo){
+
+let modo = lerModoRPG()
+
+return modo[grupo] === true
+
+}
+
+
+//━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 👤 SISTEMA DE USUÁRIO
+//━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function obterUsuarioGold(sender,nome){
+
+let golds = lerGolds()
+
+if(!golds[sender]){
+
+golds[sender] = {
+
+nome: nome || "Usuário",
+saldo:0,
+
+itens:{
+picareta:0,
+picareta_dur:0,
+picareta_chances:3,
+cassino_chances:5,
+escudo:0,
+cachaca:0,
+cachaca_chances:1,
+vinganca:0,
+vinganca_chances:1,
+quiz_chances:3
+},
+
+cooldown:{},
+
+roubos:0,
+roubo_lista:[]
+
+}
+
+salvarGolds(golds)
+
+}
+
+let user = golds[sender]
+
+if(!user.itens) user.itens={}
+if(!user.cooldown) user.cooldown={}
+if(!Array.isArray(user.roubo_lista)) user.roubo_lista=[]
+
+return {golds,user}
+
+}
+
+
+function addGold(user,valor){
+
+user.saldo += valor
+
+if(user.saldo < 0)
+user.saldo = 0
+
+}
 
 //JOGO DA FORCA 
 let jogoForca = {}
@@ -1300,9 +1474,10 @@ const commandList = [
     "resetgp", "resetprefixgp", "rg", "rmvip", "score",
     "serasa", "servip", "setprefixgp", "sex", "tapa",
     "telefone", "ttk", "ttk2", "vergp", "abracar", "louca", "carinho",
-    "forca", "cancelarforca", "Pingif", "fotobv", "legendabv",
-     "resetfotobv", "reset_legendabv"
-    
+    "forca", "cancelarforca", "divorcio", "casar", "Pingif",
+    "legendabv", "fotobv", "resetfotobv", "reset_legendabv",
+    "meupar", "divorcio", "trair", "animememe", "wallpaper",
+    "metadinha2", "hentai"
 ];
 
 
@@ -1457,8 +1632,12 @@ if ((info.messageTimestamp || 0) < BOT_START_TIME) return;
 
 if (!info?.message) return;
 
-// 🚫 ignora mensagens do próprio bot
-if (info.key.fromMe) return;
+
+// Permite que o bot responda aos próprios comandos, mas ignora mensagens comuns
+const corpoMensagem = info.message?.conversation || info.message?.extendedTextMessage?.text || "";
+const ehComando = corpoMensagem.startsWith(prefix);
+if (info.key.fromMe && !ehComando) return;
+
 
 const from = info.key.remoteJid;
 const isGroup = from.endsWith('@g.us');
@@ -1471,6 +1650,37 @@ if (isGroup) {
     registrarAtividade(from, sender, info.pushName, ehComando);
 }
 
+//━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 💰 BÔNUS DIÁRIO
+//━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+if(isGroup && rpgAtivo(from)){
+
+let {golds,user} = obterUsuarioGold(sender, info.pushName)
+
+const hoje = new Date().toLocaleDateString()
+
+if(user.ultimo_daily !== hoje){
+
+user.saldo += 20
+user.ultimo_daily = hoje
+
+salvarGolds(golds)
+
+await client.sendMessage(
+from,
+{
+text:`🌟 @${sender.split("@")[0]} ganhou *20 Golds* pela primeira mensagem do dia!
+📜 Use *${prefix}menurpg* para saber mais sobre o sistema de RPG.`,
+mentions:[sender]
+},
+{ quoted: info }
+)
+
+}
+
+}
+
 
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1479,61 +1689,71 @@ if (isGroup) {
 
 let afkData = lerAFK();
 
-// Verificação 1: Se quem mandou mensagem estava AFK, desativa
-if (afkData[sender]) {
+// chave do usuário no grupo
+const chaveUsuario = `${from}_${sender}`
 
-    const tempoPassado = Date.now() - afkData[sender].timestamp;
+// Verificação AFK (quando a pessoa volta)
+if (afkData[chaveUsuario]) {
 
-    const horas = Math.floor(tempoPassado / (1000 * 60 * 60));
-    const minutos = Math.floor((tempoPassado % (1000 * 60 * 60)) / (1000 * 60));
-    const segundos = Math.floor((tempoPassado % (1000 * 60)) / 1000);
-    const milissegundos = tempoPassado % 1000;
+const tempoPassado = Date.now() - afkData[chaveUsuario].timestamp;
 
-    await client.sendMessage(from, {
-        text:
-`✨ *Você voltou ao chat!*
+const horas = Math.floor(tempoPassado / (1000 * 60 * 60));
+const minutos = Math.floor((tempoPassado % (1000 * 60 * 60)) / (1000 * 60));
+const segundos = Math.floor((tempoPassado % (1000 * 60)) / 1000);
+const milissegundos = tempoPassado % 1000;
 
-👤 *Usuário:* @${sender.split('@')[0]}
-📝 *Motivo do AFK:*
-${afkData[sender].motivo || "Não informado"}
-⏳ *Tempo ausente:*
-${horas}h, ${minutos}m, ${segundos}s e ${milissegundos}ms`,
-        mentions: [sender]
-    }, { quoted: info });
+await client.sendMessage(from, {
+text: `✨ Bem-vindo de volta, *${afkData[chaveUsuario].pushName}*! 
 
-    delete afkData[sender];
-    salvarAFK(afkData);
+⏳ Você ficou ausente por ${horas}h, ${minutos}m, ${segundos}s e ${milissegundos}ms. 
+💭 Motivo: ${afkData[chaveUsuario].motivo || "Sem motivo especificado"}`,
+mentions: [sender]
+}, { quoted: info })
+
+delete afkData[chaveUsuario];
+salvarAFK(afkData);
+
 }
 
-// Verificação 2: Se alguém marcou alguém que está AFK
+// Verificação 2: se alguém marcou alguém AFK
 const mencoes = info.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+const respondido = info.message?.extendedTextMessage?.contextInfo?.participant;
 
-if (mencoes.length > 0) {
-    for (let jid of mencoes) {
+let alvos = [...mencoes];
 
-        if (afkData[jid]) {
-
-            const tempoPassado = Date.now() - afkData[jid].timestamp;
-
-            const horas = Math.floor(tempoPassado / (1000 * 60 * 60));
-            const minutos = Math.floor((tempoPassado % (1000 * 60 * 60)) / (1000 * 60));
-            const segundos = Math.floor((tempoPassado % (1000 * 60)) / 1000);
-
-            await client.sendMessage(from, {
-                text:
-`🚫 *Usuário Ausente*
-
-👤 *Marcado:* @${jid.split('@')[0]}
-📝 *Motivo:*
-${afkData[jid].motivo || "Não informado"}
-⏳ *Ausente há:*
-${horas}h ${minutos}m ${segundos}s`,
-                mentions: [jid]
-            }, { quoted: info });
-
-        }
-    }
+if (respondido && !alvos.includes(respondido)) {
+alvos.push(respondido);
 }
+
+for (let jid of alvos) {
+
+const chaveMarcado = `${from}_${jid}`
+
+if (afkData[chaveMarcado]) {
+
+const tempoPassado = Date.now() - afkData[chaveMarcado].timestamp;
+
+const horas = Math.floor(tempoPassado / (1000 * 60 * 60));
+const minutos = Math.floor((tempoPassado % (1000 * 60 * 60)) / (1000 * 60));
+const segundos = Math.floor((tempoPassado % (1000 * 60)) / 1000);
+
+const tempoFormatado = `${horas}h ${minutos}m ${segundos}s`;
+
+await client.sendMessage(from,{
+text:`Oie >_< ${info.pushName}! O participante @${jid.split('@')[0]} se encontra ausente no momento
+
+😴 Motivo: ${afkData[chaveMarcado].motivo || "Sem motivo especificado"}
+⏳ Ausente há: ${tempoFormatado}`,
+mentions:[jid]
+},{ quoted: info })
+
+}
+
+}
+
+
+
+
 //━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 📌 DETECTAR MARCAÇÃO
 //━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2795,6 +3015,729 @@ const text = args.join(" ");
 
 switch (comando) {
 
+case "surubao": {
+    try {
+        if (!isGroup) return reply("😈 Esse comando só funciona em grupos.");
+
+        await client.sendMessage(from, {
+            react: { text: "😈", key: info.key }
+        });
+
+        let qtd = parseInt(args[0]) || 3;
+        if (qtd > 15) qtd = 15;
+        if (qtd < 1) qtd = 1;
+
+        const groupMetadata = await client.groupMetadata(from);
+        
+        const lidDono = String(data.LidDono).replace(/\D/g, '');
+
+        const participantes = groupMetadata.participants
+            .map(p => p.id)
+            .filter(id => {
+                const idLimpo = id.split("@")[0].replace(/\D/g, '');
+                return idLimpo !== lidDono;
+            });
+
+        if (participantes.length < qtd) {
+            return reply(`😈 Não há pessoas suficientes para um surubão de ${qtd}.`);
+        }
+
+        const selecionados = participantes
+            .sort(() => 0.5 - Math.random())
+            .slice(0, qtd);
+
+        let listaMencoes = "";
+        selecionados.forEach(id => {
+            listaMencoes += `➔ @${id.split("@")[0]}\n`;
+        });
+
+        const textoFinal = `😈 @${sender.split("@")[0]} quer que *${qtd}* pessoas venham de *chicote, algema e corda de alpinista.*\n\n${listaMencoes}`;
+
+        const caminhoImagem = "./arquivos/fotos/suruba.jpg";
+
+        try {
+            if (fs.existsSync(caminhoImagem)) {
+                await client.sendMessage(from, {
+                    image: fs.readFileSync(caminhoImagem),
+                    caption: textoFinal,
+                    mentions: [sender, ...selecionados]
+                }, { quoted: info });
+            } else {
+                await client.sendMessage(from, {
+                    text: textoFinal,
+                    mentions: [sender, ...selecionados]
+                }, { quoted: info });
+            }
+        } catch (error) {
+            await client.sendMessage(from, {
+                text: textoFinal,
+                mentions: [sender, ...selecionados]
+            }, { quoted: info });
+        }
+
+    } catch (err) {
+        console.error("Erro no comando surubao:", err);
+        reply("❌ Ocorreu um erro ao organizar o surubão.");
+    }
+}
+break;
+
+case "metadinha": {
+
+await client.sendMessage(from,{
+react:{text:"💞", key:info.key}
+})
+
+try{
+
+const url =
+`https://api.blackaut.shop/api/imagem/metadinha?apikey=${data.apikey2}`
+
+const res = await fetch(url)
+const json = await res.json()
+
+if(!json)
+return reply("❌ Não consegui pegar a metadinha.")
+
+const numero = json["número"]
+const masc = json.masculina
+const fem = json.feminina
+
+await client.sendMessage(from,{
+image:{url: masc},
+caption:
+`💙 *METADE MASCULINA*`
+},{quoted:info})
+
+await client.sendMessage(from,{
+image:{url: fem},
+caption:
+`💗 *METADE FEMININA*`
+},{quoted:info})
+
+}catch(err){
+
+console.log("Erro metadinha:", err)
+reply("❌ Erro ao buscar metadinha.")
+
+}
+
+}
+break
+
+case "hentai": {
+    try {
+        if (!vip && !soDono) {
+            return reply("🚫 Este comando é exclusivo para usuários VIP.");
+        }
+
+        await client.sendMessage(from, {
+            react: { text: "🔞", key: info.key }
+        });
+
+        reply("🔞 Aguarde um instante, estou buscando o conteúdo...");
+
+        const apiKey = data.apikey2;
+        if (!apiKey) return reply("❌ apikey2 não encontrada no data.json.");
+
+        const apiURL = `https://api.blackaut.shop/api/pesquisa/hentai?query=anime&apikey=${apiKey}`;
+
+        const res = await fetch(apiURL);
+        const json = await res.json();
+
+        if (!json.status || !json.resultado || json.resultado.length === 0) {
+            return reply("❌ Não consegui encontrar nenhum conteúdo no momento.");
+        }
+
+        const resultado = json.resultado[Math.floor(Math.random() * json.resultado.length)];
+
+        await client.sendMessage(from, {
+            video: { url: resultado.video_1 },
+            mimetype: "video/mp4"
+        }, { quoted: info });
+
+    } catch (err) {
+        console.error("Erro no comando hentai:", err);
+        reply("❌ Ocorreu um erro ao processar sua solicitação.");
+    }
+}
+break;
+
+case "anime": {
+
+if(!args[0])
+return reply(
+`🔎 *Digite o nome do anime*
+
+Exemplo:
+${prefix}anime naruto`
+)
+
+await client.sendMessage(from,{
+react:{text:"🎌", key:info.key}
+})
+
+try{
+
+const nome = args.join(" ")
+
+const url =
+`https://api.blackaut.shop/api/pesquisa/anime?nome=${encodeURIComponent(nome)}&apikey=${data.apikey2}`
+
+const res = await fetch(url)
+const json = await res.json()
+
+if(!json.status || !json.resultado || json.resultado.length === 0)
+return reply("❌ Anime não encontrado.")
+
+const anime = json.resultado[0]
+
+/*━━━━━━━━━━━━━━━━━━
+🎭 TRADUZIR GÊNEROS
+━━━━━━━━━━━━━━━━━━*/
+
+const traduzGenero = {
+"Action":"Ação",
+"Adventure":"Aventura",
+"Comedy":"Comédia",
+"Romance":"Romance",
+"Fantasy":"Fantasia",
+"Drama":"Drama",
+"Ecchi":"Ecchi",
+"Supernatural":"Sobrenatural",
+"Horror":"Terror",
+"Sci-Fi":"Ficção Científica",
+"Mystery":"Mistério",
+"Slice of Life":"Vida Cotidiana"
+}
+
+let generos = anime.genero
+.split(", ")
+.map(g => traduzGenero[g] || g)
+.join(", ")
+
+/*━━━━━━━━━━━━━━━━━━
+📝 TRADUZIR SINOPSE
+━━━━━━━━━━━━━━━━━━*/
+
+let sinopseOriginal = anime.sinopse.substring(0,1000)
+
+let sinopse = sinopseOriginal
+
+try{
+
+const parte1 = sinopseOriginal.substring(0,500)
+const parte2 = sinopseOriginal.substring(500,1000)
+
+const trad1 = await fetch(
+`https://api.mymemory.translated.net/get?q=${encodeURIComponent(parte1)}&langpair=en|pt`
+)
+
+const json1 = await trad1.json()
+
+const trad2 = await fetch(
+`https://api.mymemory.translated.net/get?q=${encodeURIComponent(parte2)}&langpair=en|pt`
+)
+
+const json2 = await trad2.json()
+
+sinopse =
+(json1.responseData.translatedText || parte1) +
+(json2.responseData.translatedText || parte2)
+
+}catch{}
+
+/*━━━━━━━━━━━━━━━━━━
+📋 TEXTO FINAL
+━━━━━━━━━━━━━━━━━━*/
+
+const texto =
+`┏━━━〔 🎌 ANIME ENCONTRADO 〕━━━┓
+
+📺 *Nome:*
+${anime.nome}
+
+⭐ *Score:*
+${anime.score}
+
+🎞 *Episódios:*
+${anime.episodios}
+
+📅 *Lançamento:*
+${anime.lancamento}
+
+🎭 *Gêneros:*
+${generos}
+
+📝 *Sinopse:*
+${sinopse}
+
+🔗 *Mais informações:*
+${anime.url}
+
+┗━━━━━━━━━━━━━━━━━━━┛`
+
+await client.sendMessage(from,{
+image:{ url: anime.imagem },
+caption: texto
+},{quoted:info})
+
+}catch(err){
+
+console.log("Erro anime:", err)
+reply("❌ Não consegui pesquisar o anime.")
+
+}
+
+}
+break
+
+case "wallpaper": {
+
+await client.sendMessage(from,{
+react:{text:"🖼️", key:info.key}
+})
+
+try{
+
+const url =
+`https://api.blackaut.shop/api/pesquisa/wallpaper2?query=anime&apikey=${data.apikey2}`
+
+await client.sendMessage(from,{
+image:{ url },
+},{quoted:info})
+
+}catch(err){
+
+console.log("Erro wallpaper:", err)
+
+reply("❌ Não consegui buscar o wallpaper agora.")
+
+}
+
+}
+break
+
+case "animeMeme":
+case "animememe": {
+
+await client.sendMessage(from,{
+react:{text:"🖼️", key:info.key}
+})
+
+try{
+
+const url = `https://api.blackaut.shop/api/imagem/animememe?apikey=${data.apikey2}`
+
+await client.sendMessage(from,{
+image:{ url },
+},{quoted:info})
+
+}catch(err){
+
+console.log("Erro animememe:", err)
+
+reply("❌ Não consegui gerar o meme agora.")
+
+}
+
+}
+break
+
+case "trair": {
+
+if (!isGroup)
+return reply("💔 Esse comando só funciona em grupos.");
+
+const alvo =
+mentioned[0] ||
+info.message?.extendedTextMessage?.contextInfo?.participant;
+
+if (!alvo)
+return reply("💔 Marque alguém ou responda a mensagem da pessoa.");
+
+const autor = sender;
+const db = lerCasamentos();
+
+if (autor === alvo)
+return reply("💔 Você não pode trair com você mesmo.");
+
+const antigoParceiro = db[autor];
+
+if (antigoParceiro) {
+delete db[antigoParceiro];
+delete db[autor];
+}
+
+const parceiroDoAlvo = db[alvo];
+if (parceiroDoAlvo) {
+delete db[parceiroDoAlvo];
+delete db[alvo];
+}
+
+db[autor] = alvo;
+db[alvo] = autor;
+
+salvarCasamentos(db);
+
+const nomeAutor = autor.split("@")[0];
+const nomeAlvo = alvo.split("@")[0];
+
+let texto;
+
+if (antigoParceiro) {
+
+const nomeAntigo = antigoParceiro.split("@")[0];
+
+texto =
+`💔 𝙏𝙍𝘼𝙄𝘾̧𝘼̃𝙊 💔
+
+@${nomeAutor} traiu @${nomeAntigo} com @${nomeAlvo}...
+
+Agora @${nomeAutor} & @${nomeAlvo} são o novo casal do grupo.`
+
+}else{
+
+texto =
+`💞 𝙉𝙊𝙑𝙊 𝘾𝘼𝙎𝘼𝙇 💞
+
+@${nomeAutor} se envolveu com @${nomeAlvo}...
+
+Agora os dois formam um novo casal no grupo.`
+
+}
+
+await client.sendMessage(from,{
+react:{text:"💔", key:info.key}
+})
+
+const fs = require("fs")
+const caminho = "./arquivos/fotos/trair.jpg"
+
+try{
+
+if(fs.existsSync(caminho)){
+
+await client.sendMessage(from,{
+image: fs.readFileSync(caminho),
+caption: texto,
+mentions:[autor,alvo,antigoParceiro].filter(Boolean)
+})
+
+}else{
+
+await client.sendMessage(from,{
+text:texto,
+mentions:[autor,alvo,antigoParceiro].filter(Boolean)
+})
+
+}
+
+}catch(err){
+
+await client.sendMessage(from,{
+text:texto,
+mentions:[autor,alvo,antigoParceiro].filter(Boolean)
+})
+
+}
+
+}
+break
+
+case "divorcio": {
+
+const db = lerCasamentos()
+
+if(!db[sender])
+return reply("💔 Você não está casado.")
+
+const parceiro = db[sender]
+
+delete db[parceiro]
+delete db[sender]
+
+salvarCasamentos(db)
+
+await client.sendMessage(from,{
+react:{text:"💔", key:info.key}
+})
+
+const nomeAutor = sender.split("@")[0]
+const nomeParceiro = parceiro.split("@")[0]
+
+const texto =
+`💔 𝘿𝙄𝙑𝙊́𝙍𝘾𝙄𝙊 💔
+
+@${nomeAutor} e @${nomeParceiro}
+decidiram seguir caminhos diferentes...
+
+Agora cada um está solteiro novamente.`
+
+const fs = require("fs")
+const caminho = "./arquivos/fotos/divorcio.jpg"
+
+try{
+
+if(fs.existsSync(caminho)){
+
+await client.sendMessage(from,{
+image: fs.readFileSync(caminho),
+caption: texto,
+mentions:[sender,parceiro]
+})
+
+}else{
+
+await client.sendMessage(from,{
+text:texto,
+mentions:[sender,parceiro]
+})
+
+}
+
+}catch(err){
+
+await client.sendMessage(from,{
+text:texto,
+mentions:[sender,parceiro]
+})
+
+}
+
+}
+break
+
+case "meupar": {
+
+const db = lerCasamentos()
+
+if(!db[sender])
+return reply("💔 Você não está casado.")
+
+const parceiro = db[sender]
+
+await client.sendMessage(from,{
+react:{text:"💞", key:info.key}
+})
+
+const nomeAutor = sender.split("@")[0]
+const nomeParceiro = parceiro.split("@")[0]
+
+const texto =
+`💍 𝙎𝙀𝙐 𝙋𝘼𝙍 💍
+
+💞 Casal registrado no sistema.
+
+@${nomeAutor} & @${nomeParceiro}
+
+Vocês estão oficialmente juntos.`
+
+const fs = require("fs")
+const caminho = "./arquivos/fotos/meupar.jpg"
+
+try{
+
+if(fs.existsSync(caminho)){
+
+await client.sendMessage(from,{
+image: fs.readFileSync(caminho),
+caption: texto,
+mentions:[sender,parceiro]
+})
+
+}else{
+
+await client.sendMessage(from,{
+text:texto,
+mentions:[sender,parceiro]
+})
+
+}
+
+}catch(err){
+
+await client.sendMessage(from,{
+text:texto,
+mentions:[sender,parceiro]
+})
+
+}
+
+}
+break
+
+case "nao": {
+
+if(!pedidoCasamento[from])
+return reply("❌ Não há pedido de casamento.")
+
+const {autor,alvo} = pedidoCasamento[from]
+
+if(sender !== alvo)
+return reply("💍 Apenas a pessoa pedida pode recusar.")
+
+delete pedidoCasamento[from]
+
+await client.sendMessage(from,{
+text:`💔 @${alvo.split("@")[0]} recusou o pedido de casamento.`,
+mentions:[autor,alvo]
+})
+
+}
+break
+
+case "sim": {
+
+if(!pedidoCasamento[from])
+return reply("❌ Não há pedido de casamento.")
+
+const {autor,alvo} = pedidoCasamento[from]
+
+if(sender !== alvo)
+return reply("💍 Apenas a pessoa pedida pode aceitar.")
+
+const db = lerCasamentos()
+
+db[autor] = alvo
+db[alvo] = autor
+
+salvarCasamentos(db)
+
+delete pedidoCasamento[from]
+
+await client.sendMessage(from,{
+react:{text:"💍", key:info.key}
+})
+
+const nomeAutor = autor.split("@")[0]
+const nomeAlvo = alvo.split("@")[0]
+
+const texto =
+`💍 𝘾𝘼𝙎𝘼𝙈𝙀𝙉𝙏𝙊 𝙍𝙀𝘼𝙇𝙄𝙕𝘼𝘿𝙊 💍
+
+💞 Novo casal no grupo!
+
+@${nomeAutor} & @${nomeAlvo}
+
+Agora vocês estão oficialmente casados.
+
+✨ Felicidades ao novo casal! ✨`
+
+const fs = require("fs")
+const caminho = "./arquivos/fotos/sim.jpg"
+
+try{
+
+if(fs.existsSync(caminho)){
+
+await client.sendMessage(from,{
+image: fs.readFileSync(caminho),
+caption: texto,
+mentions:[autor,alvo]
+})
+
+}else{
+
+await client.sendMessage(from,{
+text:texto,
+mentions:[autor,alvo]
+})
+
+}
+
+}catch(err){
+
+await client.sendMessage(from,{
+text:texto,
+mentions:[autor,alvo]
+})
+
+}
+
+}
+break
+
+case "casar": {
+
+if(!isGroup)
+return reply("💍 Esse comando só funciona em grupos.")
+
+const alvo =
+mentioned[0] ||
+info.message?.extendedTextMessage?.contextInfo?.participant
+
+if(!alvo)
+return reply("💍 Marque alguém ou responda a mensagem da pessoa.")
+
+const autor = sender
+
+const db = lerCasamentos()
+
+if(db[autor])
+return reply("💍 Você já está casado.")
+
+if(db[alvo])
+return reply("💍 Essa pessoa já está casada.")
+
+global.pedidoCasamento = global.pedidoCasamento || {}
+
+pedidoCasamento[from] = {
+autor,
+alvo
+}
+
+const nomeAutor = autor.split("@")[0]
+const nomeAlvo = alvo.split("@")[0]
+
+const texto =
+`💍 𝙋𝙀𝘿𝙄𝘿𝙊 𝘿𝙀 𝘾𝘼𝙎𝘼𝙈𝙀𝙉𝙏𝙊 💍
+
+@${nomeAutor} está lhe pedindo em casamento, @${nomeAlvo}... 💞
+
+Digite:
+『 ${prefix}sim 』 ❤️
+ou
+『 ${prefix}nao 』 💔
+
+✨ O amor está no ar ✨`
+
+const fs = require("fs")
+const caminhoImagem = "./arquivos/fotos/casar.jpg"
+
+try {
+
+if(fs.existsSync(caminhoImagem)){
+
+await client.sendMessage(from,{
+image: fs.readFileSync(caminhoImagem),
+caption: texto,
+mentions:[autor,alvo]
+},{quoted:info})
+
+}else{
+
+await client.sendMessage(from,{
+text: texto,
+mentions:[autor,alvo]
+},{quoted:info})
+
+}
+
+}catch(err){
+
+console.log("Erro no comando casar:",err)
+
+await client.sendMessage(from,{
+text: texto,
+mentions:[autor,alvo]
+},{quoted:info})
+
+}
+
+}
+break
+
 case "reset_legendabv": {
 
 if (!isGroup) return enviar("❌ Apenas em grupos.")
@@ -3009,7 +3952,6 @@ case 'pin_gif': {
     }
 }
 break;
-
 
 
 
@@ -4070,7 +5012,7 @@ case "figemoji": {
             destino = sender;
             await client.sendMessage(from, { text: "😎 Enviando figurinhas de emoji no seu PV..." }, { quoted: info });
         } else {
-            await client.sendMessage(from, { text: "?? Enviando figurinhas de emoji..." }, { quoted: info });
+            await client.sendMessage(from, { text: "😎 Enviando figurinhas de emoji..." }, { quoted: info });
         }
 
         const tmpDir = path.join(__dirname, "tmp");
@@ -5419,7 +6361,7 @@ case 'rankgostoso': {
     if (participantes.length < 2)
         return reply("😏 Não há pessoas suficientes no grupo.");
 
-    // ?? reação imediata
+    // 😏 reação imediata
     await client.sendMessage(from, {
         react: { text: "😏", key: info.key }
     });
@@ -8074,33 +9016,32 @@ break;
 
 case "afk": {
     try {
+        if (!isGroup) return reply("❌ Esse comando só funciona em grupos.");
 
         await reagir("💤");
 
-        const motivo = text || "Não informado";
+        const motivo = text || "Sem motivo especificado";
 
         let afkDB = lerAFK();
 
-        afkDB[sender] = {
+        const chave = `${from}_${sender}`;
+
+        afkDB[chave] = {
             motivo: motivo,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            pushName: info.pushName || "Usuário"
         };
 
         salvarAFK(afkDB);
 
         await client.sendMessage(from, {
-            text:
-`💤 *Você agora está AFK*
-
-👤 *Usuário:* @${sender.split('@')[0]}
-📝 *Motivo:*
-${motivo}`,
+            text: `Você está agora AFK 🙇. Motivo: ${motivo}`,
             mentions: [sender]
         }, { quoted: info });
 
-    } catch (err) {
-        console.log("AFK ERROR:", err);
-        await enviar("❌ Não foi possível ativar o modo AFK.");
+    } catch (e) {
+        console.error("Erro no comando afk:", e);
+        await client.sendMessage(from, { text: "❌ Ocorreu um erro ao ativar o modo AFK." }, { quoted: info });
     }
 }
 break;
@@ -9698,8 +10639,7 @@ break
 
 
 case 'take':
-case 'wm':
-case 'roubar': {
+case 'wm': {
     const RSM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
     const stickerMsg = RSM?.stickerMessage
 
@@ -11545,7 +12485,7 @@ const canvasURL =
 `&node=${process.version}` +
 `&commands=${totalCmds}` +
 `&avatar=${encodeURIComponent(avatar)}` +
-`&fundo=https://tokito-apis.site/6b9dbb.jpg` +
+`&fundo=https://tokito-apis.site/38ce59.png` +
 `&apikey=${data.apikey}`;
 
 //━━━━━━━━━━━━━━━━━━
@@ -11716,6 +12656,927 @@ case 'dono': {
 }
 break;
 
+case "modorpg": {
+
+if(!isGroup) return reply("❌ Apenas em grupos.")
+if(!isAdmin && !soDono) return reply(" Apenas administradores podem ativar o sistema de RPG.")
+
+let modo = lerModoRPG()
+
+modo[from] = !modo[from]
+
+salvarModoRPG(modo)
+
+reply(modo[from] ?
+"🎮 Sistema de RPG ativado com sucesso neste grupo" :
+"🚫 Sistema de RPG desativado.")
+
+}
+break
+
+case "saldo": {
+
+if(!rpgAtivo(from)) return
+
+let {golds,user} = obterUsuarioGold(sender, info.pushName)
+
+reply(`💰 Seu saldo: ${user.saldo} golds`)
+
+}
+break
+
+
+
+case 'menurpg': {
+
+if(!rpgAtivo(from)){
+return reply(`⚠️ O sistema de *RPG* está desativado neste grupo.
+
+🎮 Peça para um administrador ativar usando:
+*${prefix}modorpg*`)
+}
+
+await reagir("💰");
+
+const textoMenuRpg = menu.menurpg(prefix);
+
+await client.sendMessage(from, {
+image: { url: "./dono/config/menu.jpg" },
+caption: textoMenuRpg
+}, { quoted: info });
+
+}
+break;
+
+case 'gold': {
+
+if(!rpgAtivo(from)) return
+
+const { user } = obterUsuarioGold(sender, info.pushName)
+
+// lista de roubos
+let listaRoubos = user.roubo_lista && user.roubo_lista.length
+? user.roubo_lista.map(v => `┃┃ ➮ ${v}`).join("\n")
+: "┃┃ ➮ Nenhum registro"
+
+// minerações restantes
+let mineracoes = user.itens.picareta_dur || 0
+
+const msg = `╔══════ 💰『𝙲𝙰𝚂𝙷』💰 ══════╗
+║╭─── ≪ •❈• ≫ ───╮
+║┃☆ۜۜ͜͡💰 *Nome*: ${info.pushName}
+║┃
+║┃☆ۜۜ͜͡💰 *Saldo disponível*: *${user.saldo}$ Golds*
+║╰─── 『💵』 ───╯
+╚══════ 💰『𝙲𝙰𝚂𝙷』💰 ══════╝
+│
+╔══════ 💎『𝙸𝚃𝙴𝙼𝚂』💎 ══════╗
+║╭─── ≪ •❈• ≫ ───╮
+║┃☆ۜۜ͜͡⛏️ *Picareta*: ${user.itens.picareta ? "✅" : "❌"}
+║┃➮ Minerações restantes: ${mineracoes}/10
+║┃
+║┃☆ۜۜ͜͡🎰 *Cassino*
+║┃➮ Chances: ${user.itens.cassino_chances}/5
+║┃
+║┃☆ۜۜ͜͡🛡 *Escudo*: ${user.itens.escudo ? "✅" : "❌"}
+║┃
+║┃☆ۜۜ͜͡🍺 *Cachaça*: ${user.itens.cachaca ? "✅" : "❌"}
+║┃➮ Chances: ${user.itens.cachaca_chances}/1
+║┃
+║┃☆ۜۜ͜͡🩸 *Vingança*: ${user.itens.vinganca ? "✅" : "❌"}
+║┃➮ Chances: ${user.itens.vinganca_chances}/1
+║┃
+║╰─── 『♨️』 ───╯
+╚══════ 💎『𝙸𝚃𝙴𝙼𝚂』💎 ══════╝
+│
+╔══════ ✨『𝚁𝙾𝚄𝙱𝙾𝚂』✨ ══════╗
+║╭─── ≪ •❈• ≫ ───╮
+║┃➮ *Já roubou*: ${user.roubos || 0}/5
+║┃
+║┃➮ *Lista dos que tentaram te roubar*: ↴
+║┃
+${listaRoubos}
+║╰─── 『♨️』 ───╯
+╚══════════════════════╝`
+
+reply(msg)
+
+}
+break
+
+case 'loja': {
+
+await reagir("🛍️")
+
+const msgLoja = `╭━━━ 🛍️ 『𝙻𝙾𝙹𝙰 ${data.NomeBot}』 🛍️ ━━━╮
+┃ Itens disponíveis para compra
+╰━━━━━━━━━━━━━━━━━━━━━━╯
+│
+╭━ 🛡 『ESCUDO』 ━╮
+┃ 💰 Valor: *50 Golds*
+┃
+┃ 📜 Vantagens:
+┃ Proteção contra roubos.
+┃
+┃ 🛒 Comando:
+┃ ${prefix}comprar escudo
+╰━━━━━━━━━━━━━━╯
+│
+╭━ 🍺 『CACHAÇA』 ━╮
+┃ 💰 Valor: *50 Golds*
+┃
+┃ 📜 Vantagens:
+┃ Chance de roubar golds
+┃ usando ${prefix}enviar_cachaca @user
+┃
+┃ 🛒 Comando:
+┃ ${prefix}comprar cachaça
+╰━━━━━━━━━━━━━━╯
+│
+╭━ 🩸 『VINGANÇA』 ━╮
+┃ 💰 Valor: *50 Golds*
+┃
+┃ 📜 Vantagens:
+┃ Vingar golds de quem te roubou.
+┃ Use: ${prefix}vingar @user
+┃
+┃ 🛒 Comando:
+┃ ${prefix}comprar vingança
+╰━━━━━━━━━━━━━━╯
+│
+╭━ ⛏️ 『PICARETA』 ━╮
+┃ 💰 Valor: *20 Golds*
+┃
+┃ 📜 Vantagens:
+┃ Usado para mineração.
+┃ Use: ${prefix}minerar
+┃
+┃ 🛒 Comando:
+┃ ${prefix}comprar picareta
+╰━━━━━━━━━━━━━━╯`
+
+reply(msgLoja)
+
+}
+break;
+
+case 'comprar': {
+
+if(!rpgAtivo(from)) return
+
+if (!args[0])
+return reply(`Use: ${prefix}comprar [item]`);
+
+const item = args[0].toLowerCase();
+
+let { golds, user } = obterUsuarioGold(sender, info.pushName);
+
+// preços
+const precos = {
+escudo: 50,
+cachaca: 50,
+cachaça: 50,
+vinganca: 50,
+vingança: 50,
+picareta: 20
+};
+
+if (!precos[item])
+return reply("❌ Item não encontrado na loja.");
+
+// impedir comprar item repetido
+if (item === "escudo" && user.itens.escudo)
+return reply("⚠️ Você já possui um *Escudo* 🛡️!");
+
+if ((item === "cachaca" || item === "cachaça") && user.itens.cachaca)
+return reply("⚠️ Você já possui uma *Cachaça* 🍺!");
+
+if ((item === "vinganca" || item === "vingança") && user.itens.vinganca)
+return reply("⚠️ Você já possui uma *Vingança* 🩸!");
+
+if (item === "picareta" && user.itens.picareta)
+return reply("⚠️ Você já possui uma *Picareta* ⛏️!");
+
+// verificar saldo
+if (!soDono && user.saldo < precos[item])
+return reply(`❌ Você precisa de *${precos[item]} Golds* para comprar isso.`);
+
+// descontar saldo
+if (!soDono)
+user.saldo -= precos[item];
+
+
+// dar item
+if (item === 'escudo') {
+
+user.itens.escudo = 1;
+reply("✅ Você comprou um *Escudo* 🛡️!");
+
+}
+
+else if (item === 'cachaca' || item === 'cachaça') {
+
+user.itens.cachaca = 1;
+reply("✅ Você comprou uma *Cachaça* 🍺!");
+
+}
+
+else if (item === 'vinganca' || item === 'vingança') {
+
+user.itens.vinganca = 1;
+reply("✅ Você comprou uma *Vingança* 🩸!");
+
+}
+
+else if (item === 'picareta') {
+
+user.itens.picareta = 1;
+user.itens.picareta_dur = 10;
+
+reply("✅ Você comprou uma *Picareta* ⛏️!");
+
+}
+
+salvarGolds(golds);
+
+}
+break;
+
+case 'minerar': {
+
+if(!rpgAtivo(from)) return
+
+let { golds, user } = obterUsuarioGold(sender, info.pushName)
+
+if (!user.itens.picareta)
+return reply("❌ Você precisa de uma picareta! Compre na loja.")
+await reagir("⛏️")
+
+const sorte = Math.random()
+
+let ganho = 0
+let tipo = ""
+let emoji = ""
+let raro = false
+let desgaste = 1
+
+if (sorte < 0.02) {
+
+tipo = "Obsidiana"
+emoji = "🪨"
+ganho = Math.floor(Math.random() * 400) + 600
+raro = true
+desgaste = 3
+
+}
+else if (sorte < 0.10) {
+
+tipo = "Diamante"
+emoji = "💎"
+ganho = Math.floor(Math.random() * 200) + 200
+raro = true
+desgaste = 2
+
+}
+else if (sorte < 0.35) {
+
+tipo = "Ouro"
+emoji = "🥇"
+ganho = Math.floor(Math.random() * 40) + 40
+
+}
+else {
+
+tipo = "Ferro"
+emoji = "⛏"
+ganho = Math.floor(Math.random() * 15) + 10
+
+}
+
+user.saldo += ganho
+user.itens.picareta_dur -= desgaste
+
+let mensagem = ""
+
+if(raro){
+
+mensagem = `✨✨ *ALGO RARO FOI ENCONTRADO!* ✨✨
+
+${emoji} Você minerou *${tipo}*!!
+
+💰 Valor obtido: *${ganho} Golds*`
+
+// anúncio no grupo
+await client.sendMessage(from,{
+text:`🚨 *MINERAÇÃO RARA!* 🚨
+
+@${sender.split("@")[0]} encontrou *${tipo}* ${emoji}!
+
+💰 Valor: *${ganho} Golds*`,
+mentions:[sender]
+})
+
+} else {
+
+mensagem = `${emoji} Você minerou *${tipo}*
+
+💰 Valor: *${ganho} Golds*`
+
+}
+
+if (user.itens.picareta_dur <= 0) {
+
+user.itens.picareta = 0
+user.itens.picareta_dur = 0
+
+mensagem += `
+
+💔 Sua picareta quebrou...`
+
+} else {
+
+mensagem += `
+
+🔧 Durabilidade da picareta: ${user.itens.picareta_dur}/10`
+
+}
+
+salvarGolds(golds)
+
+const caminhoImg = "./arquivos/fotos/minerar.jpg"
+
+if (fs.existsSync(caminhoImg)) {
+
+await client.sendMessage(from,{
+image:{ url:caminhoImg },
+caption:mensagem
+},{ quoted: info })
+
+} else {
+
+reply(mensagem)
+
+}
+
+}
+break;
+
+case 'cassino': {
+
+if(!rpgAtivo(from)) return
+
+await reagir("🎰")
+
+let { golds, user } = obterUsuarioGold(sender, info.pushName)
+
+// controle diário
+const hoje = new Date().toLocaleDateString()
+
+if(user.cooldown.cassino_data !== hoje){
+user.itens.cassino_chances = 5
+user.cooldown.cassino_data = hoje
+}
+
+// verificar chances
+if(user.itens.cassino_chances <= 0){
+return reply(`🎰 Você já usou todas as *5 chances do cassino hoje*.\n\n⏳ Volte amanhã para jogar novamente.`)
+}
+
+// gastar chance
+user.itens.cassino_chances -= 1
+
+const delay = ms => new Promise(res => setTimeout(res, ms))
+
+const emojis = ["💎","💰","🍀","⭐","🔥","🍒","🪙","🎲","🎯"]
+
+// gerar slot inicial
+function randomSlot(){
+return emojis[Math.floor(Math.random()*emojis.length)]
+}
+
+let msg = await client.sendMessage(from,{
+text:`╭━━━ 🎰 𝘾𝘼𝙎𝙎𝙄𝙉𝙊 🎰 ━━━╮
+┃
+┃   ${randomSlot()} │ ${randomSlot()} │ ${randomSlot()}
+┃   ${randomSlot()} │ ${randomSlot()} │ ${randomSlot()} ◄
+┃   ${randomSlot()} │ ${randomSlot()} │ ${randomSlot()}
+┃
+┃   ✦ Girando... ✦
+╰━━━━━━━━━━━━━━━━━━╯`
+},{ quoted: info })
+
+// animação
+for(let i=0;i<4;i++){
+
+await delay(450)
+
+let slot = `╭━━━ 🎰 𝘾𝘼𝙎𝙎𝙄𝙉𝙊 🎰 ━━━╮
+┃
+┃   ${randomSlot()} │ ${randomSlot()} │ ${randomSlot()}
+┃   ${randomSlot()} │ ${randomSlot()} │ ${randomSlot()} ◄
+┃   ${randomSlot()} │ ${randomSlot()} │ ${randomSlot()}
+┃
+┃   ✦ Girando... ✦
+╰━━━━━━━━━━━━━━━━━━╯`
+
+await client.sendMessage(from,{
+edit: msg.key,
+text: slot
+})
+
+}
+
+// sistema de probabilidade
+let chance = Math.random()
+
+let s1,s2,s3
+let premio = 0
+let resultado = ""
+
+if(chance < 0.02){
+
+s1=s2=s3="💎"
+premio = 500
+resultado = "💎 SUPER JACKPOT! +500 Golds"
+
+}
+else if(chance < 0.06){
+
+s1=s2=s3="🍒"
+premio = 200
+resultado = "🍒 JACKPOT! +200 Golds"
+
+}
+else if(chance < 0.12){
+
+s1=s2=s3="⭐"
+premio = 150
+resultado = "⭐ GRANDE PRÊMIO! +150 Golds"
+
+}
+else if(chance < 0.20){
+
+s1=s2=s3="🎲"
+premio = 100
+resultado = "🎲 PRÊMIO! +100 Golds"
+
+}
+else{
+
+s1=randomSlot()
+s2=randomSlot()
+s3=randomSlot()
+
+user.saldo = Math.max(0, user.saldo - 5)
+resultado = "💸 Você perdeu 5 Golds"
+
+}
+
+if(premio > 0){
+user.saldo += premio
+}
+
+salvarGolds(golds)
+
+let final = `╭━━━ 🎰 𝘾𝘼𝙎𝙎𝙄𝙉𝙊 🎰 ━━━╮
+┃
+┃   ${randomSlot()} │ ${randomSlot()} │ ${randomSlot()}
+┃   ${s1} │ ${s2} │ ${s3} ◄
+┃   ${randomSlot()} │ ${randomSlot()} │ ${randomSlot()}
+┃
+┃   ${resultado}
+╰━━━━━━━━━━━━━━━━━━╯`
+
+await client.sendMessage(from,{
+edit: msg.key,
+text: final
+})
+
+}
+break;
+
+case 'addgold': {
+
+if (!soDono)
+return reply("🚫 Apenas o dono pode usar este comando.");
+
+const valor = parseInt(args[1]);
+
+const alvo = info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0] ||
+(args[0] && args[0].includes('@') ? args[0].replace('@','') + '@s.whatsapp.net' : null);
+
+if (!alvo || isNaN(valor))
+return reply(`Use: ${prefix}addgold @user [valor]`);
+
+let { golds } = obterUsuarioGold(sender, info.pushName)
+
+let alvoData = obterUsuarioGold(alvo,"Usuário")
+let alvoUser = alvoData.user
+
+golds = lerGolds()
+
+golds[alvo].saldo += valor
+
+salvarGolds(golds)
+
+reply(`✅ *${valor} Golds* foram adicionados para *${alvoUser.nome}*!`,{
+mentions:[alvo]
+})
+
+}
+break;
+
+case 'rankgold': {
+    let golds = lerGolds();
+    let arr = Object.keys(golds).map(key => ({ jid: key, ...golds[key] }));
+    arr.sort((a, b) => b.saldo - a.saldo);
+    
+    let msg = "🏆 *RANKING DE GOLDS* 🏆\n\n";
+    arr.slice(0, 10).forEach((user, i) => {
+        msg += `${i + 1}° 🏅 @${user.jid.split('@')[0]} - ${user.saldo} Golds\n`;
+    });
+    reply(msg, { mentions: arr.slice(0, 10).map(u => u.jid) });
+}
+break;
+
+case 'roubar': {
+
+if(!rpgAtivo(from)) return
+
+const alvo = info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]
+
+if (!alvo)
+return reply("❌ Marque alguém para roubar!")
+
+if (alvo === sender)
+return reply("❌ Você não pode roubar a si mesmo!")
+
+// proteção dono (igual comando gay)
+const lidDono = String(data.LidDono).replace(/\D/g, '');
+const lidAlvo = alvo.split("@")[0].replace(/\D/g, '');
+
+if (lidAlvo === lidDono)
+return reply("👑 Você não pode roubar o dono!")
+
+let { golds, user } = obterUsuarioGold(sender, info.pushName)
+const hoje = new Date().toLocaleDateString()
+
+// reset diário
+if(user.cooldown.roubo_data !== hoje){
+user.roubos = 0
+user.cooldown.roubo_data = hoje
+}
+
+// limite diário
+if(user.roubos >= 5){
+return reply(`🕵️ Você já tentou roubar *5 vezes hoje*.
+
+⏳ Volte amanhã para tentar novamente.`)
+}
+
+// gastar tentativa
+user.roubos += 1
+let alvoData = obterUsuarioGold(alvo, "Usuário")
+let alvoUser = alvoData.user
+
+golds = lerGolds()
+
+let frase = ""
+
+// escudo
+if (alvoUser.itens.escudo) {
+
+golds[alvo].itens.escudo = 0
+
+frase = `🛡️ ${alvoUser.nome} estava protegido por um escudo e você não conseguiu roubar nada.`
+
+}
+
+// sem dinheiro
+else if (alvoUser.saldo <= 0) {
+
+frase = `💀 ${alvoUser.nome} não tem nem onde cair morto.`
+
+}
+
+// tentativa de roubo
+else {
+
+const chance = Math.random()
+
+// sucesso
+if (chance > 0.55) {
+
+let valor
+let sorte = Math.random()
+
+if(sorte < 0.50){
+valor = Math.floor(Math.random()*50)+1
+}
+else if(sorte < 0.80){
+valor = Math.floor(Math.random()*150)+50
+}
+else if(sorte < 0.95){
+valor = Math.floor(Math.random()*300)+200
+}
+else{
+valor = Math.floor(Math.random()*500)+500
+}
+
+if(valor > alvoUser.saldo)
+valor = alvoUser.saldo
+
+golds[sender].saldo += valor
+golds[alvo].saldo -= valor
+
+frase = `💸 Você roubou ${valor} Golds de ${alvoUser.nome}.`
+
+}
+
+// pego roubando
+else if (chance > 0.30) {
+
+let multa = Math.floor(Math.random()*30)+10
+
+golds[sender].saldo = Math.max(0, golds[sender].saldo - multa)
+
+frase = `👮 Você foi pego tentando roubar ${alvoUser.nome} e perdeu ${multa} Golds.`
+
+}
+
+// falhou
+else {
+
+let perda = Math.floor(Math.random()*20)+5
+
+golds[sender].saldo = Math.max(0, golds[sender].saldo - perda)
+
+frase = `❌ Você tentou roubar ${alvoUser.nome}, mas falhou e perdeu ${perda} Golds.`
+
+}
+
+}
+
+salvarGolds(golds)
+
+reply(frase)
+
+}
+break
+
+case 'enviar cachaca':
+case 'enviar_cachaca': {
+
+if(!rpgAtivo(from)) return
+
+const alvo = info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]
+
+if (!alvo)
+return reply("❌ Marque alguém para enviar a cachaça!")
+
+let { golds, user } = obterUsuarioGold(sender, info.pushName)
+let alvoData = obterUsuarioGold(alvo, "Usuário")
+let alvoUser = alvoData.user
+
+golds = lerGolds()
+
+// verificar item
+if (!user.itens.cachaca)
+return reply("❌ Você não tem cachaça! Compre na loja.")
+
+// remover item
+golds[sender].itens.cachaca = 0
+
+const chance = Math.random()
+const raro = Math.random()
+
+let frase = ""
+
+// 🍻 efeito raro
+if (raro < 0.02) {
+
+let roubado = Math.floor(Math.random()*300)+50
+
+if(roubado > alvoUser.saldo)
+roubado = alvoUser.saldo
+
+golds[sender].saldo += roubado
+golds[alvo].saldo = Math.max(0, golds[alvo].saldo - roubado)
+
+frase = `🍻 ${alvoUser.nome} ficou *MUITO bêbado* e deixou cair *${roubado} Golds*! Você pegou tudo.`
+
+}
+
+// 🍺 sucesso normal
+else if (chance > 0.30) {
+
+let roubado = Math.floor(alvoUser.saldo * 0.20)
+
+if(roubado < 1)
+roubado = 1
+
+if(roubado > alvoUser.saldo)
+roubado = alvoUser.saldo
+
+golds[sender].saldo += roubado
+golds[alvo].saldo = Math.max(0, golds[alvo].saldo - roubado)
+
+frase = `🍺 ${alvoUser.nome} ficou bêbado e você aproveitou para pegar *${roubado} Golds*!`
+
+}
+
+// 🤦 falhou
+else {
+
+frase = `🍺 ${alvoUser.nome} bebeu a cachaça mas ficou esperto! Você não conseguiu nada.`
+
+}
+
+salvarGolds(golds)
+
+reply(frase,{mentions:[alvo]})
+
+}
+break
+
+case 'vingar': {
+
+if(!rpgAtivo(from)) return
+
+await reagir("🩸")
+
+const alvo = info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]
+
+if (!alvo)
+return reply("❌ Marque quem você quer se vingar!")
+
+let { golds, user } = obterUsuarioGold(sender, info.pushName)
+let alvoData = obterUsuarioGold(alvo, "Usuário")
+let alvoUser = alvoData.user
+
+golds = lerGolds()
+
+// verificar item
+if (!user.itens.vinganca)
+return reply("❌ Você não tem o item de vingança! Compre na loja.")
+
+// verificar se já foi roubado
+const roubouVoce = user.roubo_lista.some(v => v.includes(alvo.split("@")[0]))
+
+if(!roubouVoce)
+return reply("⚠️ Você só pode se vingar de quem já te roubou!")
+
+// remover item
+golds[sender].itens.vinganca = 0
+
+// calcular valor
+let roubado = Math.floor(alvoUser.saldo * 0.30)
+
+if(roubado < 1)
+roubado = 1
+
+if(roubado > alvoUser.saldo)
+roubado = alvoUser.saldo
+
+golds[sender].saldo += roubado
+golds[alvo].saldo = Math.max(0, golds[alvo].saldo - roubado)
+
+reply(`🩸 *VINGANÇA!*
+
+Você se vingou de *${alvoUser.nome}* e recuperou *${roubado} Golds* que haviam sido roubados.` , {
+mentions:[alvo]
+})
+
+salvarGolds(golds)
+
+}
+break
+
+case 'doargold': {
+
+if(!rpgAtivo(from)) return
+
+const alvo = info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+const valor = parseInt(args[1]);
+
+if (!alvo || isNaN(valor) || valor <= 0)
+return reply(`Use: ${prefix}doargold @user [valor]`);
+
+let { golds, user } = obterUsuarioGold(sender, info.pushName);
+
+if (user.saldo < valor)
+return reply("❌ Você não tem saldo suficiente.");
+
+// garantir que o alvo existe
+if (!golds[alvo]) obterUsuarioGold(alvo, "Usuário");
+
+golds = lerGolds();
+
+const nomeDoador = user.nome
+const nomeAlvo = golds[alvo].nome
+
+golds[sender].saldo -= valor;
+golds[alvo].saldo += valor;
+
+salvarGolds(golds);
+
+reply(`🎁 *${nomeDoador}* doou *${valor} Golds* para *${nomeAlvo}*!`, {
+mentions:[alvo]
+})
+
+}
+break;
+
+case 'vergold': {
+
+if(!rpgAtivo(from)) return
+
+const alvo = info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+
+if (!alvo)
+return reply("❌ Marque alguém para ver o saldo!");
+
+const { user } = obterUsuarioGold(alvo, "Usuário");
+
+reply(`💰 O saldo de *${user.nome}* é de *${user.saldo} Golds*.`, {
+mentions:[alvo]
+});
+
+}
+break;
+
+case 'zerar_rankgold': {
+    if (!soDono) return reply("🚫 Apenas o dono pode usar este comando.");
+    salvarGolds({});
+    reply("✅ Ranking de Golds resetado com sucesso!");
+}
+break;
+
+case 'sorteiogold': {
+
+if (!isGroup)
+return reply("📢 Esse comando funciona apenas em grupos.");
+
+if (!isAdmin && !soDono)
+return reply("🚫 Apenas administradores podem usar esse comando.");
+
+const groupMetadata = await client.groupMetadata(from);
+const participantes = groupMetadata.participants.map(p => p.id);
+
+const sorteado = participantes[Math.floor(Math.random() * participantes.length)];
+const valor = Math.floor(Math.random() * 100) + 50;
+
+let golds = lerGolds();
+
+// criar usuário se não existir
+let alvoData = obterUsuarioGold(sorteado, "Usuário");
+let alvoUser = alvoData.user;
+
+golds = lerGolds();
+
+golds[sorteado].saldo += valor;
+
+salvarGolds(golds);
+
+reply(`*PARABÉNS✨!!! VOCÊ FOI SORTEADO COM ${valor}$ golds* 💰💎
+
+⸺͟͞ꪶ *${alvoUser.nome}* 🥂`, {
+mentions:[sorteado]
+})
+
+}
+break;
+
+case 'rmgold': {
+
+if (!soDono)
+return reply("🚫 Apenas o dono pode usar este comando.");
+
+const valor = parseInt(args[1]);
+
+const alvo = info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0] ||
+(args[0] && args[0].includes('@') ? args[0].replace('@','') + '@s.whatsapp.net' : null);
+
+if (!alvo || isNaN(valor))
+return reply(`Use: ${prefix}rmgold @user [valor]`);
+
+let alvoData = obterUsuarioGold(alvo,"Usuário")
+let alvoUser = alvoData.user
+
+let golds = lerGolds()
+
+// remover gold
+golds[alvo].saldo = Math.max(0, golds[alvo].saldo - valor)
+
+salvarGolds(golds)
+
+reply(`❌ *${valor} Golds* foram removidos de *${alvoUser.nome}*!`,{
+mentions:[alvo]
+})
+
+}
+break;
+
 case "menu": {
 
 await reagir("🩸");
@@ -11734,6 +13595,7 @@ mentions: [sender]
 }, { quoted: info });
 break;
 }
+
 /*━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎮 FIM DOS COMANDOS 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━*/
