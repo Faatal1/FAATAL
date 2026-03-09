@@ -896,6 +896,7 @@ function contarComandosInteligente() {
     }
 }
 
+
 //━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 🧠 MEMÓRIA PERSISTENTE IA
 //━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1478,7 +1479,8 @@ const commandList = [
     "forca", "cancelarforca", "divorcio", "casar", "Pingif",
     "legendabv", "fotobv", "resetfotobv", "reset_legendabv",
     "meupar", "divorcio", "trair", "animememe", "wallpaper",
-    "metadinha2", "hentai", "sugestão", "surubao"
+    "metadinha2", "hentai", "sugestão", "surubao", "grupo f", "grupo a",
+    "ranksafados", "rankfeio", "rankburro", "rankapaixonados"
 ];
 
 
@@ -2607,6 +2609,7 @@ mentions:[jogo.turno]
 }
 
 
+
 //━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 🤖 AUTO GEMINI PRIVADO
 //━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2858,6 +2861,8 @@ return;
 }
 
 
+
+
  
 
 //━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3015,6 +3020,448 @@ const text = args.join(" ");
 ━━━━━━━━━━━━━━━━━━━━━━━━━━*/
 
 switch (comando) {
+
+case "rankfeio": {
+
+if (!isGroup) return reply("💀 Esse comando só funciona em grupos.");
+
+const fs = require("fs");
+
+const groupMetadata = await client.groupMetadata(from);
+const participantes = groupMetadata.participants.map(p => p.id);
+
+const lidDono = String(data.LidDono).replace(/\D/g,'');
+
+// remove dono
+const filtrados = participantes.filter(id => {
+return id.split("@")[0].replace(/\D/g,'') !== lidDono;
+});
+
+if (filtrados.length < 2)
+return reply("💀 Não há pessoas suficientes para gerar o rank.");
+
+await client.sendMessage(from,{
+react:{text:"💀", key:info.key}
+});
+
+const mensagensBusca = [
+"💀 Escaneando nível de feiura...",
+"🪞 Quebrando espelhos do grupo...",
+"🤢 Detectando rostos perigosos...",
+"👹 Calculando nível de susto...",
+"💀 Procurando os mais feios..."
+];
+
+await client.sendMessage(from,{
+text: mensagensBusca[Math.floor(Math.random()*mensagensBusca.length)]
+},{quoted:info});
+
+await new Promise(r => setTimeout(r,2000));
+
+const embaralhado = filtrados.sort(() => 0.5 - Math.random());
+
+const top = embaralhado.slice(0, Math.min(5, embaralhado.length));
+
+const posicoes = [
+"🥇 1° Lugar — Feiúra Suprema",
+"🥈 2° Lugar — Quebra Espelho",
+"🥉 3° Lugar — Assustador",
+"👹 4° Lugar — Aparência Suspeita",
+"🤢 5° Lugar — Sustinho Básico"
+];
+
+let texto =
+`💀 *RANK DOS MAIS FEIOS* 💀
+
+`;
+
+top.forEach((id,index)=>{
+texto += `${posicoes[index]}\n@${id.split("@")[0]}\n\n`;
+});
+
+texto += `> 𝙁𝘼𝘼𝙏𝘼𝙇 𝙈𝘿`;
+
+const caminhoImagem = "./arquivos/fotos/feio.jpg";
+
+try{
+
+if(fs.existsSync(caminhoImagem)){
+
+await client.sendMessage(from,{
+image: fs.readFileSync(caminhoImagem),
+caption: texto,
+mentions: top
+},{quoted:info});
+
+}else{
+
+await client.sendMessage(from,{
+text: texto,
+mentions: top
+},{quoted:info});
+
+}
+
+}catch{
+
+await client.sendMessage(from,{
+text: texto,
+mentions: top
+},{quoted:info});
+
+}
+
+}
+break;
+
+case "ranksafados": {
+
+if (!isGroup) return reply("😈 Esse comando só funciona em grupos.");
+
+const fs = require("fs");
+
+const groupMetadata = await client.groupMetadata(from);
+const participantes = groupMetadata.participants.map(p => p.id);
+
+if (participantes.length < 2)
+return reply("😈 Não há pessoas suficientes no grupo.");
+
+await client.sendMessage(from,{
+react:{text:"😈", key:info.key}
+});
+
+// mensagens de busca
+const mensagensBusca = [
+"😈 Detectando níveis de safadeza...",
+"🔥 Calculando energia proibida do grupo...",
+"🥵 Procurando os mais safados...",
+"😏 Escaneando pensamentos perigosos...",
+"💋 Medindo o nível de malícia..."
+];
+
+await client.sendMessage(from,{
+text: mensagensBusca[Math.floor(Math.random()*mensagensBusca.length)]
+},{quoted:info});
+
+await new Promise(r => setTimeout(r,2000));
+
+// embaralha participantes
+const embaralhado = participantes.sort(() => 0.5 - Math.random());
+
+// pega até 5 pessoas
+const top = embaralhado.slice(0, Math.min(5, embaralhado.length));
+
+const posicoes = [
+"🥇 1° Lugar — Safadeza Máxima",
+"🥈 2° Lugar — Mente Perigosa",
+"🥉 3° Lugar — Pensamento Proibido",
+"🔥 4° Lugar — Energia Suspeita",
+"😏 5° Lugar — Olhar Malicioso"
+];
+
+let texto =
+`😈 *RANK DOS MAIS SAFADOS* 😈
+
+`;
+
+top.forEach((id,index)=>{
+texto += `${posicoes[index]}\n@${id.split("@")[0]}\n\n`;
+});
+
+texto += `> 𝙁𝘼𝘼𝙏𝘼𝙇 𝙈𝘿`;
+
+const caminhoGif = "./arquivos/fotos/safado.mp4";
+
+try{
+
+if(fs.existsSync(caminhoGif)){
+
+await client.sendMessage(from, {
+  video: fs.readFileSync(caminhoGif),
+  gifPlayback: true,
+  mimetype: "video/mp4",
+  caption: texto,
+  mentions: top
+}, { quoted: info })
+
+}else{
+
+await client.sendMessage(from,{
+text: texto,
+mentions: top
+},{quoted:info});
+
+}
+
+}catch{
+
+await client.sendMessage(from,{
+text: texto,
+mentions: top
+},{quoted:info});
+
+}
+
+}
+break;
+
+
+case "rankburro": {
+
+if (!isGroup) return reply("🐴 Esse comando só funciona em grupos.");
+
+const fs = require("fs");
+
+const groupMetadata = await client.groupMetadata(from);
+const participantes = groupMetadata.participants.map(p => p.id);
+
+const lidDono = String(data.LidDono).replace(/\D/g,'');
+
+// remove o dono da lista
+const filtrados = participantes.filter(id => {
+return id.split("@")[0].replace(/\D/g,'') !== lidDono;
+});
+
+if (filtrados.length < 2)
+return reply("🐴 Não há pessoas suficientes para gerar o rank.");
+
+await client.sendMessage(from,{
+react:{text:"🐴", key:info.key}
+});
+
+// mensagens de busca
+const mensagensBusca = [
+"🐴 Procurando os mais lerdos do grupo...",
+"🧠 Calculando níveis negativos de QI...",
+"🤪 Detectando burrice extrema...",
+"📉 Analisando inteligência suspeita...",
+"🐴 Escaneando quem dormiu nas aulas..."
+];
+
+await client.sendMessage(from,{
+text: mensagensBusca[Math.floor(Math.random()*mensagensBusca.length)]
+},{quoted:info});
+
+await new Promise(r => setTimeout(r,2000));
+
+// embaralha
+const embaralhado = filtrados.sort(() => 0.5 - Math.random());
+
+// pega até 5
+const top = embaralhado.slice(0, Math.min(5, embaralhado.length));
+
+const posicoes = [
+"🥇 1° Lugar — Burrice Suprema",
+"🥈 2° Lugar — Cabeça de Vento",
+"🥉 3° Lugar — QI em Falta",
+"🐴 4° Lugar — Pensamento Lento",
+"🤡 5° Lugar — Confusão Mental"
+];
+
+let texto =
+`🐴 *RANK DOS MAIS BURROS* 🐴
+
+`;
+
+top.forEach((id,index)=>{
+texto += `${posicoes[index]}\n@${id.split("@")[0]}\n\n`;
+});
+
+texto += `> 𝙁𝘼𝘼𝙏𝘼𝙇 𝙈𝘿`;
+
+const caminhoImagem = "./arquivos/fotos/burro.jpg";
+
+try{
+
+if(fs.existsSync(caminhoImagem)){
+
+await client.sendMessage(from,{
+image: fs.readFileSync(caminhoImagem),
+caption: texto,
+mentions: top
+},{quoted:info});
+
+}else{
+
+await client.sendMessage(from,{
+text: texto,
+mentions: top
+},{quoted:info});
+
+}
+
+}catch{
+
+await client.sendMessage(from,{
+text: texto,
+mentions: top
+},{quoted:info});
+
+}
+
+}
+break;
+
+case "rankapaixonados": {
+
+if (!isGroup) return reply("💘 Esse comando só funciona em grupos.");
+
+const fs = require("fs");
+
+const groupMetadata = await client.groupMetadata(from);
+const participantes = groupMetadata.participants.map(p => p.id);
+
+if (participantes.length < 2)
+return reply("💘 É preciso pelo menos 2 pessoas no grupo.");
+
+await client.sendMessage(from,{
+react:{text:"💘", key:info.key}
+});
+
+// mensagens de busca
+const mensagensBusca = [
+"💘 Detectando corações apaixonados...",
+"❤️ Analisando níveis de romance no grupo...",
+"💕 Calculando intensidade dos sentimentos...",
+"😍 Procurando os mais apaixonados...",
+"💞 Escaneando quem anda suspirando..."
+];
+
+await client.sendMessage(from,{
+text: mensagensBusca[Math.floor(Math.random()*mensagensBusca.length)]
+},{quoted:info});
+
+await new Promise(r => setTimeout(r,2000));
+
+// embaralha participantes
+const embaralhado = participantes.sort(() => 0.5 - Math.random());
+
+// pega até 5 pessoas, mas funciona com menos
+const top = embaralhado.slice(0, Math.min(5, embaralhado.length));
+
+const posicoes = [
+"🥇 1° Lugar — Apaixonado Perdido",
+"🥈 2° Lugar — Coração Derretido",
+"🥉 3° Lugar — Romântico Nato",
+"💞 4° Lugar — Amor no Ar",
+"💘 5° Lugar — Suspiro Garantido"
+];
+
+let texto =
+`💘 *RANK DOS APAIXONADOS* 💘
+
+`;
+
+top.forEach((id,index)=>{
+texto += `${posicoes[index]}\n@${id.split("@")[0]}\n\n`;
+});
+
+texto += `> 𝙁𝘼𝘼𝙏𝘼𝙇 𝙈𝘿`;
+
+const caminhoImagem = "./arquivos/fotos/apaixonados.jpg";
+
+try{
+
+if(fs.existsSync(caminhoImagem)){
+
+await client.sendMessage(from,{
+image: fs.readFileSync(caminhoImagem),
+caption: texto,
+mentions: top
+},{quoted:info});
+
+}else{
+
+await client.sendMessage(from,{
+text: texto,
+mentions: top
+},{quoted:info});
+
+}
+
+}catch{
+
+await client.sendMessage(from,{
+text: texto,
+mentions: top
+},{quoted:info});
+
+}
+
+}
+break;
+
+case "grupo": {
+
+if(!isGroup)
+return reply("⚠️ Esse comando só funciona em grupos.")
+
+if(!isAdmin && !soDono)
+return reply("🚫 Apenas administradores podem usar esse comando.")
+
+if(!args[0])
+return reply(`Use assim:
+
+${prefix}grupo f  → fechar grupo
+${prefix}grupo a  → abrir grupo`)
+
+const opcao = args[0].toLowerCase()
+
+if(opcao === "f"){
+
+await client.sendMessage(from,{
+react:{text:"🔒", key:info.key}
+})
+
+try{
+
+await client.groupSettingUpdate(from,"announcement")
+
+await client.sendMessage(from,{
+text:
+`🔒 *GRUPO FECHADO*
+
+Agora apenas administradores podem enviar mensagens.`
+},{quoted:info})
+
+}catch(err){
+console.log("ERRO GRUPO:",err)
+reply("❌ Não consegui fechar o grupo.")
+}
+
+}
+
+else if(opcao === "a"){
+
+await client.sendMessage(from,{
+react:{text:"🔓", key:info.key}
+})
+
+try{
+
+await client.groupSettingUpdate(from,"not_announcement")
+
+await client.sendMessage(from,{
+text:
+`🔓 *GRUPO ABERTO*
+
+Todos os membros podem enviar mensagens novamente.`
+},{quoted:info})
+
+}catch(err){
+console.log("ERRO GRUPO:",err)
+reply("❌ Não consegui abrir o grupo.")
+}
+
+}else{
+reply(`Use apenas:
+
+${prefix}grupo f
+${prefix}grupo a`)
+}
+
+}
+break;
 
 case "sugestao":
 case "sugestão": {

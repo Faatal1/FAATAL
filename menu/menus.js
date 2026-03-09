@@ -116,7 +116,12 @@ return `╭━━━〔 👹 𝐁𝐑𝐈𝐍𝐂𝐀𝐃𝐄𝐈𝐑𝐀𝐒 �
 ┃
 ┃ 🏆 RANKINGS
 ┃ 🃏 ${prefix}rankputa
+┃ 🃏 ${prefix}rankgostoso 
+┃ 🃏 ${prefix}rankapaixonados
 ┃ 🃏 ${prefix}rankgay
+┃ 🃏 ${prefix}rankfeio
+┃ 🃏 ${prefix}rankburro
+┃ 🃏 ${prefix}ranksafados
 ┃ 🃏 ${prefix}rankinteligente
 ┃ 🃏 ${prefix}rankrico
 ┃ 🃏 ${prefix}rankpobre
@@ -195,6 +200,8 @@ return `╭━━━〔 👹 𝐀𝐃𝐌𝐈𝐍𝐈𝐒𝐓𝐑𝐀𝐂̧𝐀�
 ┃ 🎭 𝐆𝐄𝐒𝐓𝐀̃𝐎 𝐃𝐄 𝐆𝐑𝐔𝐏𝐎𝐒
 ╰━━━━━━━━━━━━━━━━━━━━━━
 ┃
+┃ ☠️ ${prefix}grupo a
+┃ ☠️ ${prefix}grupo f
 ┃ ☠️ ${prefix}legendabv
 ┃ ☠️ ${prefix}fotobv 
 ┃ ☠️ ${prefix}resetfotobv
