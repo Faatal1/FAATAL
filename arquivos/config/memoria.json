@@ -40,12 +40,57 @@
       {
         "role": "assistant",
         "content": "qual carro ce quer?\n"
+      },
+      {
+        "role": "user",
+        "content": "❌ Falha ao executar ping."
+      },
+      {
+        "role": "assistant",
+        "content": "vish\nque q deu?\n"
+      },
+      {
+        "role": "user",
+        "content": "que foi mano"
+      },
+      {
+        "role": "assistant",
+        "content": "sla kkkk\nto aqui no trampo tbm\n"
+      },
+      {
+        "role": "user",
+        "content": "kkkk"
+      },
+      {
+        "role": "assistant",
+        "content": "kkk\nmassa\n"
+      },
+      {
+        "role": "user",
+        "content": "kkkk"
+      },
+      {
+        "role": "assistant",
+        "content": "aí sim kkk\n"
+      },
+      {
+        "role": "user",
+        "content": "ai sim o que kkk"
+      },
+      {
+        "role": "assistant",
+        "content": "kkk\nsla mano\nai sim q vc ta curtindo tbm\nkkkk\n"
       }
     ],
     "girias": [
       "manda",
       "edit",
-      "carro"
+      "carro",
+      "falha",
+      "executar",
+      "ping",
+      "mano",
+      "kkkk"
     ]
   },
   "120363421690941003@newsletter": {

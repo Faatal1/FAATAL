@@ -2735,28 +2735,125 @@ if (/(manda|envia|quero ouvir).*(m[úu]sica)/i.test(body)) {
 }
 
 
-//━━━━━━━━━━━━━━━━━━
-// 📷 PINTEREST
-//━━━━━━━━━━━━━━━━━━
+// 🔥 DETECTOR DE PEDIDO DE IMAGEM
+if (/(manda|envia|mostra|quero ver).*(foto|fotos|imagem|imagens)/i.test(body)) {
 
-if (/(foto|imagem|imagens)/i.test(body)) {
+    try {
 
-const busca = body
-.replace(/(manda|envia|mostra|foto|imagem|imagens|de)/gi,"")
-.trim();
+        if (!body || body.length < 2) return;
 
-if (!busca) return;
+        const texto = body.toLowerCase();
 
-await enviarComoHumano(client,"já já te mando",from,info);
+        //━━━━━━━━━━━━━━━━━━
+        // 🔢 DETECTAR QUANTIDADE
+        //━━━━━━━━━━━━━━━━━━
 
-const url = `https://tokito-apis.site/api/pinterest?q=${encodeURIComponent(busca)}&apikey=${data.apikey}&r=${Date.now()}`;
+        let quantidade = 1;
 
-await client.sendMessage(from,{
-image:{ url }
-},{ quoted: info });
+        const numerosExtenso = {
+            "um": 1,
+            "uma": 1,
+            "dois": 2,
+            "duas": 2,
+            "três": 3,
+            "tres": 3,
+            "quatro": 4,
+            "cinco": 5
+        };
 
-return;
+        const numeroDigitado = texto.match(/\b([1-9])\b/);
 
+        if (numeroDigitado) {
+            quantidade = parseInt(numeroDigitado[1]);
+        } else {
+            for (const palavra in numerosExtenso) {
+                if (texto.includes(palavra)) {
+                    quantidade = numerosExtenso[palavra];
+                    break;
+                }
+            }
+        }
+
+        if (quantidade > 5) quantidade = 5;
+
+        //━━━━━━━━━━━━━━━━━━
+        // 🔎 LIMPAR BUSCA
+        //━━━━━━━━━━━━━━━━━━
+
+        const busca = texto
+            .replace(/\b[0-9]+\b/g, "")
+            .replace(/\b(um|uma|dois|duas|três|tres|quatro|cinco)\b/g, "")
+            .replace(/(manda|me envia|envia|mostra|quero ver|foto|fotos|imagem|imagens|de)/g, "")
+            .trim();
+
+        if (!busca) return;
+
+        //━━━━━━━━━━━━━━━━━━
+        // 💬 RESPOSTA HUMANA
+        //━━━━━━━━━━━━━━━━━━
+
+        const respostas = [
+            "calma aí que já te mando",
+            "já já chega aí pra tu",
+            "pera um segundo",
+            "tô vendo aqui",
+            "deixa eu pegar aqui",
+            "já tô puxando aqui",
+            "só um instante",
+            "já vou mandar aí",
+            "relaxa que já vem",
+            "deixa comigo rapidão"
+        ];
+
+        const msgEscolhida = respostas[Math.floor(Math.random() * respostas.length)];
+
+        await enviarComoHumano(client, msgEscolhida, from, info);
+
+        const apiKey = data.apikey;
+
+        //━━━━━━━━━━━━━━━━━━
+        // 📷 CONTROLE DE REPETIÇÃO
+        //━━━━━━━━━━━━━━━━━━
+
+        const urlsEnviadas = new Set();
+        let tentativas = 0;
+
+        while (urlsEnviadas.size < quantidade && tentativas < 10) {
+
+            tentativas++;
+
+            const antiCache = `${Date.now()}_${Math.random()}`;
+
+            const url =
+            `https://tokito-apis.site/api/pinterest?q=${encodeURIComponent(busca)}&apikey=${apiKey}&r=${antiCache}`;
+
+            if (urlsEnviadas.has(url)) continue;
+
+            urlsEnviadas.add(url);
+
+            await client.sendPresenceUpdate("composing", from);
+
+            await new Promise(r => setTimeout(r, 1200));
+
+            await client.sendMessage(from, {
+                image: { url }
+            }, { quoted: info });
+
+            await new Promise(r => setTimeout(r, 700));
+        }
+
+        return;
+
+    } catch (err) {
+
+        console.log("ERRO PIN IA:", err);
+
+        await client.sendMessage(from, {
+            text: "deu erro ao buscar imagem"
+        }, { quoted: info });
+
+        return;
+    }
 }
 
 
