@@ -1059,8 +1059,8 @@ Conversa fiada: vai no flow, responde natural
 
 EXEMPLOS DE COMO VOCÊ RESPONDERIA:
 
-Pessoa: "e ai mano"
-Você: "suave, e tu"
+Pessoa: "eai mano"
+Você: "eai, de boa?"
 
 Pessoa: "cara to mt cansado"
 Você: "vish"
@@ -2620,46 +2620,58 @@ if (
     sistemaIA.ativa &&
     !info.key.fromMe &&
     !body.startsWith(prefix) &&
-    !isIABlocked(sender) && // 🔥 NOVA LINHA
-    (
-        (!isGroup) || 
-        (isGroup && botFoiChamado)
-    )
+    !isIABlocked(sender) &&
+    ((!isGroup) || (isGroup && botFoiChamado))
 ) {
 
-    try {
+try {
 
-        if (!body || body.length < 2) return;
+if (!body || body.length < 2) return;
 
-        const numeroUsuario = sender.replace(/\D/g, '');
-        const numeroDono = data.NumeroDono.replace(/\D/g, '');
-        const isCriador = numeroUsuario === numeroDono;
+const numeroUsuario = sender.replace(/\D/g, '');
+const numeroDono = data.NumeroDono.replace(/\D/g, '');
+const isCriador = numeroUsuario === numeroDono;
+
+
+//━━━━━━━━━━━━━━━━━━
+// 🔥 XINGAMENTO
+//━━━━━━━━━━━━━━━━━━
 
 const xingamento = detectarXingamento(body);
 
 if (xingamento) {
 
-    const respostas = [
-        `olha o ${xingamento} falando`,
-        `${xingamento} é vc sô`,
-        `ce que é ${xingamento} uai`,
-        `fala direito ${xingamento}`
-    ];
+const respostas = [
+`olha o ${xingamento} falando`,
+`${xingamento} é vc sô`,
+`ce que é ${xingamento} uai`,
+`fala direito ${xingamento}`
+];
 
-    const resposta = respostas[Math.floor(Math.random() * respostas.length)];
+const resposta = respostas[Math.floor(Math.random() * respostas.length)];
 
-    await enviarComoHumano(client, resposta, from, info);
+await enviarComoHumano(client, resposta, from, info);
 
-    return;
+return;
 }
 
-        const db = lerMemoria();
+
+//━━━━━━━━━━━━━━━━━━
+// 🧠 MEMÓRIA
+//━━━━━━━━━━━━━━━━━━
+
+const db = lerMemoria();
+
 if (!db[sender]) {
-    db[sender] = { historico: [], girias: [] };
+db[sender] = { historico: [], girias: [] };
 }
 
 const historico = db[sender]?.historico || [];
 
+
+//━━━━━━━━━━━━━━━━━━
+// 🎵 DETECTOR MUSICA
+//━━━━━━━━━━━━━━━━━━
 
 if (/(manda|envia|quero ouvir).*(m[úu]sica)/i.test(body)) {
     try {
@@ -2672,17 +2684,15 @@ if (/(manda|envia|quero ouvir).*(m[úu]sica)/i.test(body)) {
 
         // respostas naturais estilo "mano pra mano"
         const respostas = [
-            "boa escolha… vou caçar aqui pra vc meu mano",
-            "essa é boa hein, vou procurar aqui",
-            "tu tem bom gosto hein… calma aí",
-            "já vou te mandar meu brother",
-            "deixa comigo, já tô procurando",
-            "só um segundo meu cria",
-            "já já chega aí pra tu escutar",
-            "relaxa que já vem pedrada",
-            "tô puxando aqui pra vc agora",
-            "essa vale a pena… só um segundo"
-        ];
+"calma aí que vou baixar o áudio aqui pra tu",
+"já tô procurando essa música aqui",
+"pera um segundo que já te mando",
+"tô puxando o áudio aqui agora",
+"só um instante que já vem",
+"já tô baixando aqui pra ti",
+"deixa comigo que já chega",
+"já já tu vai escutar essa pedrada"
+];
 
         const msgEscolhida = respostas[Math.floor(Math.random() * respostas.length)];
 
@@ -2724,311 +2734,183 @@ if (/(manda|envia|quero ouvir).*(m[úu]sica)/i.test(body)) {
     }
 }
 
-// 🔥 DETECTOR DE PEDIDO DE IMAGEM
-if (/(manda|envia|mostra|quero ver).*(foto|fotos|imagem|imagens)/i.test(body)) {
 
-    try {
+//━━━━━━━━━━━━━━━━━━
+// 📷 PINTEREST
+//━━━━━━━━━━━━━━━━━━
 
-        if (!body || body.length < 2) return;
+if (/(foto|imagem|imagens)/i.test(body)) {
 
-        const texto = body.toLowerCase();
+const busca = body
+.replace(/(manda|envia|mostra|foto|imagem|imagens|de)/gi,"")
+.trim();
 
-        //━━━━━━━━━━━━━━━━━━
-        // 🔢 DETECTAR QUANTIDADE
-        //━━━━━━━━━━━━━━━━━━
+if (!busca) return;
 
-        let quantidade = 1;
+await enviarComoHumano(client,"já já te mando",from,info);
 
-        const numerosExtenso = {
-            "um": 1,
-            "uma": 1,
-            "dois": 2,
-            "duas": 2,
-            "três": 3,
-            "tres": 3,
-            "quatro": 4,
-            "cinco": 5
-        };
+const url = `https://tokito-apis.site/api/pinterest?q=${encodeURIComponent(busca)}&apikey=${data.apikey}&r=${Date.now()}`;
 
-        const numeroDigitado = texto.match(/\b([1-9])\b/);
+await client.sendMessage(from,{
+image:{ url }
+},{ quoted: info });
 
-        if (numeroDigitado) {
-            quantidade = parseInt(numeroDigitado[1]);
-        } else {
-            for (const palavra in numerosExtenso) {
-                if (texto.includes(palavra)) {
-                    quantidade = numerosExtenso[palavra];
-                    break;
-                }
-            }
-        }
+return;
 
-        if (quantidade > 5) quantidade = 5;
-
-        //━━━━━━━━━━━━━━━━━━
-        // 🔎 LIMPAR BUSCA
-        //━━━━━━━━━━━━━━━━━━
-
-        const busca = texto
-            .replace(/\b[0-9]+\b/g, "")
-            .replace(/\b(um|uma|dois|duas|três|tres|quatro|cinco)\b/g, "")
-            .replace(/(manda|me envia|envia|mostra|quero ver|foto|fotos|imagem|imagens|de)/g, "")
-            .trim();
-
-        if (!busca) return;
-
-        //━━━━━━━━━━━━━━━━━━
-        // 💬 RESPOSTA HUMANA
-        //━━━━━━━━━━━━━━━━━━
-
-        const respostas = [
-            "calma aí que já te mando",
-            "já já chega aí pra tu",
-            "pera um segundo",
-            "tô vendo aqui",
-            "deixa eu pegar aqui",
-            "já tô puxando aqui",
-            "só um instante",
-            "já vou mandar aí",
-            "relaxa que já vem",
-            "deixa comigo rapidão"
-        ];
-
-        const msgEscolhida = respostas[Math.floor(Math.random() * respostas.length)];
-
-        await enviarComoHumano(client, msgEscolhida, from, info);
-
-        const apiKey = data.apikey;
-
-        //━━━━━━━━━━━━━━━━━━
-        // 📷 CONTROLE DE REPETIÇÃO
-        //━━━━━━━━━━━━━━━━━━
-
-        const urlsEnviadas = new Set();
-        let tentativas = 0;
-
-        while (urlsEnviadas.size < quantidade && tentativas < 10) {
-
-            tentativas++;
-
-            const antiCache = `${Date.now()}_${Math.random()}`;
-
-            const url =
-            `https://tokito-apis.site/api/pinterest?q=${encodeURIComponent(busca)}&apikey=${apiKey}&r=${antiCache}`;
-
-            if (urlsEnviadas.has(url)) continue;
-
-            urlsEnviadas.add(url);
-
-            await client.sendPresenceUpdate("composing", from);
-
-            await new Promise(r => setTimeout(r, 1200));
-
-            await client.sendMessage(from, {
-                image: { url }
-            }, { quoted: info });
-
-            await new Promise(r => setTimeout(r, 700));
-        }
-
-        return;
-
-    } catch (err) {
-
-        console.log("ERRO PIN IA:", err);
-
-        await client.sendMessage(from, {
-            text: "deu erro ao buscar imagem"
-        }, { quoted: info });
-
-        return;
-    }
 }
 
-// 🔥 DETECTOR DE PEDIDO DE VÍDEO
-if (/(manda|envia|mostra|quero ver).*(vídeo|video)/i.test(body)) {
 
-    try {
+//━━━━━━━━━━━━━━━━━━
+// 🎥 TIKTOK MELHORADO
+//━━━━━━━━━━━━━━━━━━
 
-        if (!body || body.length < 2) return;
+if (/(vídeo|video|tiktok)/i.test(body)) {
 
-        const axios = require("axios");
+const axios = require("axios");
 
-        const texto = body.toLowerCase();
+const busca = body
+.replace(/(manda|envia|mostra|vídeo|video|tiktok|de)/gi,"")
+.trim();
 
-        //━━━━━━━━━━━━━━━━━━
-        // 🔎 LIMPAR BUSCA
-        //━━━━━━━━━━━━━━━━━━
+if (!busca) return;
 
-        const busca = texto
-            .replace(/(manda|me envia|envia|mostra|quero ver|vídeo|video|de)/g, "")
-            .trim();
+await enviarComoHumano(client,"já tô procurando aqui",from,info);
 
-        if (!busca) return;
+const res = await axios.post(
+"https://www.tikwm.com/api/feed/search",
+{
+keywords: busca,
+count: 30,
+cursor: 0,
+HD: 1
+},
+{
+headers:{
+"Content-Type":"application/json",
+"User-Agent":"Mozilla/5.0"
+}
+}
+);
 
-        //━━━━━━━━━━━━━━━━━━
-        // 💬 RESPOSTAS HUMANAS
-        //━━━━━━━━━━━━━━━━━━
+const videos = res.data?.data?.videos;
 
-        const respostas = [
-            "calma aí que já te mando",
-            "já já chega aí",
-            "pera um segundo",
-            "tô vendo aqui",
-            "já tô puxando aqui",
-            "só um instante"
-        ];
+if (!videos?.length) return;
 
-        const msgEscolhida = respostas[Math.floor(Math.random() * respostas.length)];
+const positivas = ["edit","cinematic","drift","supercar","jdm","luxo","turbo","stance","4k"];
+const negativas = ["lavando","conserto","quebrado","sucata","oficina","restaurando","problema"];
 
-        await enviarComoHumano(client, msgEscolhida, from, info);
+const filtrados = videos.filter(v => {
 
-        await client.sendPresenceUpdate("composing", from);
-        await new Promise(r => setTimeout(r, 1500));
+const texto = `${v.title || ""} ${v.desc || ""}`.toLowerCase();
 
-        //━━━━━━━━━━━━━━━━━━
-        // 🔍 PESQUISA TIKTOK
-        //━━━━━━━━━━━━━━━━━━
+if (negativas.some(p => texto.includes(p))) return false;
 
-        const res = await axios.post(
-            "https://www.tikwm.com/api/feed/search",
-            {
-                keywords: busca,
-                count: 12,
-                cursor: 0,
-                HD: 1
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    "User-Agent": "Mozilla/5.0"
-                },
-                timeout: 120000
-            }
-        );
+return positivas.some(p => texto.includes(p)) || texto.includes(busca.toLowerCase());
 
-        const videos = res.data?.data?.videos;
+});
 
-        if (!videos?.length) return;
+const listaFinal = filtrados.length ? filtrados : videos;
 
-        //━━━━━━━━━━━━━━━━━━
-        // 🧠 FILTRAR RESULTADOS
-        //━━━━━━━━━━━━━━━━━━
+const videoURL = listaFinal[0]?.play;
 
-        const filtrados = videos.filter(v => {
+if (!videoURL) return;
 
-            const titulo = (v.title || "").toLowerCase();
-            const desc = (v.desc || "").toLowerCase();
+await client.sendMessage(from,{
+video:{ url: videoURL },
+mimetype:"video/mp4"
+},{ quoted: info });
 
-            return titulo.includes(busca) || desc.includes(busca);
+return;
 
-        });
-
-        const listaFinal = filtrados.length ? filtrados : videos;
-
-        const vid = listaFinal[0]; // pega o mais relevante
-
-        const videoURL = vid.play;
-
-        if (!videoURL) return;
-
-        //━━━━━━━━━━━━━━━━━━
-        // 🎥 ENVIO DO VÍDEO
-        //━━━━━━━━━━━━━━━━━━
-
-        await client.sendMessage(from, {
-            video: { url: videoURL },
-            mimetype: "video/mp4"
-        }, { quoted: info });
-
-        return;
-
-    } catch (err) {
-
-        console.log("ERRO VIDEO IA:", err);
-
-        await client.sendMessage(from, {
-            text: "deu erro ao buscar vídeo"
-        }, { quoted: info });
-
-        return;
-    }
 }
 
-// 🔥 DETECTOR DE REPETIÇÃO
+
+//━━━━━━━━━━━━━━━━━━
+// 🔥 DETECTOR REPETIÇÃO
+//━━━━━━━━━━━━━━━━━━
+
 const ultimasMensagens = historico
-    .filter(m => m.role === "user")
-    .slice(-2)
-    .map(m => m.content.toLowerCase());
+.filter(m => m.role === "user")
+.slice(-2)
+.map(m => m.content.toLowerCase());
 
 if (
-    ultimasMensagens.length === 2 &&
-    ultimasMensagens[0] === ultimasMensagens[1] &&
-    ultimasMensagens[1] === body.toLowerCase()
+ultimasMensagens.length === 2 &&
+ultimasMensagens[0] === ultimasMensagens[1] &&
+ultimasMensagens[1] === body.toLowerCase()
 ) {
 
-    await new Promise(r => setTimeout(r, 1800));
+await new Promise(r => setTimeout(r,1800));
 
-    await client.sendPresenceUpdate("composing", from);
-    await new Promise(r => setTimeout(r, 1500));
+await client.sendPresenceUpdate("composing", from);
 
-    await client.sendMessage(from, {
-        text: "tu vai repetir isso até quando"
-    }, { quoted: info });
+await client.sendMessage(from,{
+text:"tu vai repetir isso até quando"
+},{ quoted: info });
 
-    return;
+return;
 }
 
 
-        salvarGirias(sender, body);
+//━━━━━━━━━━━━━━━━━━
+// 🧠 GIRIAS
+//━━━━━━━━━━━━━━━━━━
+
+salvarGirias(sender, body);
 
 const giriasAprendidas = db[sender]?.girias || [];
 
 const estadoEmocional = detectarEmocao(body);
+
+
+//━━━━━━━━━━━━━━━━━━
+// ⏰ PERÍODO
+//━━━━━━━━━━━━━━━━━━
 
 const agora = new Date();
 const hora = agora.getHours();
 
 let periodo;
 
-if (hora >= 0 && hora < 6) {
-    periodo = "madrugada";
-} else if (hora >= 6 && hora < 12) {
-    periodo = "manha";
-} else if (hora >= 12 && hora < 18) {
-    periodo = "tarde";
-} else {
-    periodo = "noite";
-}
+if (hora < 6) periodo = "madrugada";
+else if (hora < 12) periodo = "manha";
+else if (hora < 18) periodo = "tarde";
+else periodo = "noite";
+
+
+//━━━━━━━━━━━━━━━━━━
+// 🧠 PROMPT BASE
+//━━━━━━━━━━━━━━━━━━
 
 const promptBase = gerarPromptBase(
-    info.pushName || "Usuário",
-    isCriador,
-    periodo,
-    estadoEmocional,
-    giriasAprendidas
+info.pushName || "Usuário",
+isCriador,
+periodo,
+estadoEmocional,
+giriasAprendidas
 );
 
 
+//━━━━━━━━━━━━━━━━━━
+// 🧠 HISTÓRICO
+//━━━━━━━━━━━━━━━━━━
 
-        const contexto = [
-            { role: "user", content: promptBase },
-            ...historico,
-            { role: "user", content: body }
-        ];
-
-        await client.sendPresenceUpdate("composing", from);
-
-        // monta histórico em texto
 let historicoTexto = "";
 
-for (let msg of historico) {
-    if (msg.role === "user") {
-        historicoTexto += `Pessoa: ${msg.content}\n`;
-    } else {
-        historicoTexto += `Faatal: ${msg.content}\n`;
-    }
+for (let msg of historico.slice(-8)) {
+
+if (msg.role === "user")
+historicoTexto += `Pessoa: ${msg.content}\n`;
+
+else
+historicoTexto += `Faatal: ${msg.content}\n`;
+
 }
+
+
+//━━━━━━━━━━━━━━━━━━
+// 🤖 PROMPT FINAL
+//━━━━━━━━━━━━━━━━━━
 
 const promptFinal = `
 ${promptBase}
@@ -3040,58 +2922,68 @@ Pessoa: ${body}
 Faatal:
 `;
 
+//━━━━━━━━━━━━━━━━━━
+// 🤖 RESPOSTA IA
+//━━━━━━━━━━━━━━━━━━
 
+await client.sendPresenceUpdate("composing", from);
 
+const urlGemini = `https://tokito-apis.site/api/gemini-pro?texto=${encodeURIComponent(promptFinal)}&apikey=${data.apikey}`;
 
-    const url = `https://tokito-apis.site/api/gemini-pro?texto=${encodeURIComponent(promptFinal)}&apikey=${data.apikey}`;
+const respostaAPI = await fetch(urlGemini);
 
-    const res = await fetch(url);
+// se API falhar
+if (!respostaAPI.ok) {
 
-    if (!res.ok) {
-        await client.sendMessage(from, {
-            
-        }, { quoted: info });
-        return;
-    }
+await enviarComoHumano(client,
+"rapaz... tentei pensar aqui mas a IA travou agora",
+from,
+info
+);
 
-    const json = await res.json();
+return;
+}
 
-    let resposta =
-        json?.resposta?.candidates?.[0]?.content?.parts?.[0]?.text;
+const json = await respostaAPI.json();
 
-    if (!resposta) {
-        await client.sendMessage(from, {
-           
-        }, { quoted: info });
-        return;
-    }
+let resposta;
 
-    // aplica variação e erro humano leve
-    resposta = variarTexto(resposta);
-    resposta = erroHumanoLeve(resposta);
+if (json?.resposta?.candidates?.length) {
+    resposta = json.resposta.candidates[0].content.parts[0].text;
+}
 
-    // salva memória
-    adicionarMemoria(sender, "user", body);
-    adicionarMemoria(sender, "assistant", resposta);
+if (!resposta) {
 
-    // envia com comportamento humano real
-    await enviarComoHumano(client, resposta, from, info);
+console.log("RESPOSTA API:", json);
 
-} catch (err) {
+resposta = "oxe... deu branco aqui agora";
 
-    console.log("FAATAL IA ERROR:", err);
+}
 
-    await client.sendMessage(from, {
-        text: "deu um erro aqui mas já já eu volto"
-    }, { quoted: info });
+// humanização
+resposta = variarTexto(resposta);
+resposta = erroHumanoLeve(resposta);
+
+// memória
+adicionarMemoria(sender,"user",body);
+adicionarMemoria(sender,"assistant",resposta);
+
+// enviar
+await enviarComoHumano(client,resposta,from,info);
+
+} catch(err){
+
+console.log("FAATAL IA ERROR:",err);
+
+await client.sendMessage(from,{
+text:"deu um erro aqui mas já já eu volto"
+},{ quoted: info });
 
 }
 
 return;
 }
 
-
- 
 
 //━━━━━━━━━━━━━━━━━━━━━━━━━
 // 📌 COMANDO SEM PREFIXO
@@ -3234,13 +3126,8 @@ msg;
 const mime =
 Object.keys(quotedMsg || {})[0];
 
-const reply = enviar; // reaproveita seu sistema
+const reply = enviar; 
 const text = args.join(" ");
-
-
-
-
-
 
 
 /*━━━━━━━━━━━━━━━━━━━━━━━━━━
