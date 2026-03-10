@@ -2724,6 +2724,236 @@ if (/(manda|envia|quero ouvir).*(m[úu]sica)/i.test(body)) {
     }
 }
 
+// 🔥 DETECTOR DE PEDIDO DE IMAGEM
+if (/(manda|envia|mostra|quero ver).*(foto|fotos|imagem|imagens)/i.test(body)) {
+
+    try {
+
+        if (!body || body.length < 2) return;
+
+        const texto = body.toLowerCase();
+
+        //━━━━━━━━━━━━━━━━━━
+        // 🔢 DETECTAR QUANTIDADE
+        //━━━━━━━━━━━━━━━━━━
+
+        let quantidade = 1;
+
+        const numerosExtenso = {
+            "um": 1,
+            "uma": 1,
+            "dois": 2,
+            "duas": 2,
+            "três": 3,
+            "tres": 3,
+            "quatro": 4,
+            "cinco": 5
+        };
+
+        const numeroDigitado = texto.match(/\b([1-9])\b/);
+
+        if (numeroDigitado) {
+            quantidade = parseInt(numeroDigitado[1]);
+        } else {
+            for (const palavra in numerosExtenso) {
+                if (texto.includes(palavra)) {
+                    quantidade = numerosExtenso[palavra];
+                    break;
+                }
+            }
+        }
+
+        if (quantidade > 5) quantidade = 5;
+
+        //━━━━━━━━━━━━━━━━━━
+        // 🔎 LIMPAR BUSCA
+        //━━━━━━━━━━━━━━━━━━
+
+        const busca = texto
+            .replace(/\b[0-9]+\b/g, "")
+            .replace(/\b(um|uma|dois|duas|três|tres|quatro|cinco)\b/g, "")
+            .replace(/(manda|me envia|envia|mostra|quero ver|foto|fotos|imagem|imagens|de)/g, "")
+            .trim();
+
+        if (!busca) return;
+
+        //━━━━━━━━━━━━━━━━━━
+        // 💬 RESPOSTA HUMANA
+        //━━━━━━━━━━━━━━━━━━
+
+        const respostas = [
+            "calma aí que já te mando",
+            "já já chega aí pra tu",
+            "pera um segundo",
+            "tô vendo aqui",
+            "deixa eu pegar aqui",
+            "já tô puxando aqui",
+            "só um instante",
+            "já vou mandar aí",
+            "relaxa que já vem",
+            "deixa comigo rapidão"
+        ];
+
+        const msgEscolhida = respostas[Math.floor(Math.random() * respostas.length)];
+
+        await enviarComoHumano(client, msgEscolhida, from, info);
+
+        const apiKey = data.apikey;
+
+        //━━━━━━━━━━━━━━━━━━
+        // 📷 CONTROLE DE REPETIÇÃO
+        //━━━━━━━━━━━━━━━━━━
+
+        const urlsEnviadas = new Set();
+        let tentativas = 0;
+
+        while (urlsEnviadas.size < quantidade && tentativas < 10) {
+
+            tentativas++;
+
+            const antiCache = `${Date.now()}_${Math.random()}`;
+
+            const url =
+            `https://tokito-apis.site/api/pinterest?q=${encodeURIComponent(busca)}&apikey=${apiKey}&r=${antiCache}`;
+
+            if (urlsEnviadas.has(url)) continue;
+
+            urlsEnviadas.add(url);
+
+            await client.sendPresenceUpdate("composing", from);
+
+            await new Promise(r => setTimeout(r, 1200));
+
+            await client.sendMessage(from, {
+                image: { url }
+            }, { quoted: info });
+
+            await new Promise(r => setTimeout(r, 700));
+        }
+
+        return;
+
+    } catch (err) {
+
+        console.log("ERRO PIN IA:", err);
+
+        await client.sendMessage(from, {
+            text: "deu erro ao buscar imagem"
+        }, { quoted: info });
+
+        return;
+    }
+}
+
+// 🔥 DETECTOR DE PEDIDO DE VÍDEO
+if (/(manda|envia|mostra|quero ver).*(vídeo|video)/i.test(body)) {
+
+    try {
+
+        if (!body || body.length < 2) return;
+
+        const axios = require("axios");
+
+        const texto = body.toLowerCase();
+
+        //━━━━━━━━━━━━━━━━━━
+        // 🔎 LIMPAR BUSCA
+        //━━━━━━━━━━━━━━━━━━
+
+        const busca = texto
+            .replace(/(manda|me envia|envia|mostra|quero ver|vídeo|video|de)/g, "")
+            .trim();
+
+        if (!busca) return;
+
+        //━━━━━━━━━━━━━━━━━━
+        // 💬 RESPOSTAS HUMANAS
+        //━━━━━━━━━━━━━━━━━━
+
+        const respostas = [
+            "calma aí que já te mando",
+            "já já chega aí",
+            "pera um segundo",
+            "tô vendo aqui",
+            "já tô puxando aqui",
+            "só um instante"
+        ];
+
+        const msgEscolhida = respostas[Math.floor(Math.random() * respostas.length)];
+
+        await enviarComoHumano(client, msgEscolhida, from, info);
+
+        await client.sendPresenceUpdate("composing", from);
+        await new Promise(r => setTimeout(r, 1500));
+
+        //━━━━━━━━━━━━━━━━━━
+        // 🔍 PESQUISA TIKTOK
+        //━━━━━━━━━━━━━━━━━━
+
+        const res = await axios.post(
+            "https://www.tikwm.com/api/feed/search",
+            {
+                keywords: busca,
+                count: 12,
+                cursor: 0,
+                HD: 1
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "User-Agent": "Mozilla/5.0"
+                },
+                timeout: 120000
+            }
+        );
+
+        const videos = res.data?.data?.videos;
+
+        if (!videos?.length) return;
+
+        //━━━━━━━━━━━━━━━━━━
+        // 🧠 FILTRAR RESULTADOS
+        //━━━━━━━━━━━━━━━━━━
+
+        const filtrados = videos.filter(v => {
+
+            const titulo = (v.title || "").toLowerCase();
+            const desc = (v.desc || "").toLowerCase();
+
+            return titulo.includes(busca) || desc.includes(busca);
+
+        });
+
+        const listaFinal = filtrados.length ? filtrados : videos;
+
+        const vid = listaFinal[0]; // pega o mais relevante
+
+        const videoURL = vid.play;
+
+        if (!videoURL) return;
+
+        //━━━━━━━━━━━━━━━━━━
+        // 🎥 ENVIO DO VÍDEO
+        //━━━━━━━━━━━━━━━━━━
+
+        await client.sendMessage(from, {
+            video: { url: videoURL },
+            mimetype: "video/mp4"
+        }, { quoted: info });
+
+        return;
+
+    } catch (err) {
+
+        console.log("ERRO VIDEO IA:", err);
+
+        await client.sendMessage(from, {
+            text: "deu erro ao buscar vídeo"
+        }, { quoted: info });
+
+        return;
+    }
+}
 
 // 🔥 DETECTOR DE REPETIÇÃO
 const ultimasMensagens = historico
@@ -2859,8 +3089,6 @@ Faatal:
 
 return;
 }
-
-
 
 
  
@@ -13054,7 +13282,7 @@ const canvasURL =
 `&node=${process.version}` +
 `&commands=${totalCmds}` +
 `&avatar=${encodeURIComponent(avatar)}` +
-`&fundo=https://tokito-apis.site/38ce59.png` +
+`&fundo=https://tokito-apis.site/de291c.jpg` +
 `&apikey=${data.apikey}`;
 
 //━━━━━━━━━━━━━━━━━━

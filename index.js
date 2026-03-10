@@ -654,7 +654,7 @@ const avatar = await client.profilePictureUrl(user,'image')
 const config = require('./dono/config/data.json')
 const apikey = config.apikey2
 
-const url = `https://tokito-apis.site/canvas/welcome?fundo=https://tokito-apis.site/de291c.jpg&avatar=${encodeURIComponent(avatar)}&titulo=Bem-vindo!&sub=Novo+Membro&apikey=${apikey}`
+const url = `https://tokito-apis.site/canvas/welcome?fundo=https://tokito-apis.site/6b9dbb.jpg&avatar=${encodeURIComponent(avatar)}&titulo=Bem-vindo!&sub=Novo+Membro&apikey=${apikey}`
 
 await client.sendMessage(id,{
 image:{ url },
