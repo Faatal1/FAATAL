@@ -3,22 +3,6 @@
     "historico": [
       {
         "role": "user",
-        "content": "Oi"
-      },
-      {
-        "role": "assistant",
-        "content": "eai\nde boa?\n"
-      },
-      {
-        "role": "user",
-        "content": "Oi"
-      },
-      {
-        "role": "assistant",
-        "content": "Eae\nTranquilo?\n"
-      },
-      {
-        "role": "user",
         "content": "Opa"
       },
       {
@@ -80,6 +64,22 @@
       {
         "role": "assistant",
         "content": "kkk\nsla mano\nai sim q vc ta curtindo tbm\nkkkk\n"
+      },
+      {
+        "role": "user",
+        "content": "Oi"
+      },
+      {
+        "role": "assistant",
+        "content": "eai\nde boa?\n"
+      },
+      {
+        "role": "user",
+        "content": "https://vt.tiktok.com/ZSuk8p1gj/"
+      },
+      {
+        "role": "assistant",
+        "content": "eita\nkkkkk\ndoido\n"
       }
     ],
     "girias": [
@@ -90,7 +90,8 @@
       "executar",
       "ping",
       "mano",
-      "kkkk"
+      "kkkk",
+      "httpsvttiktokcomzsukpgj"
     ]
   },
   "120363421690941003@newsletter": {

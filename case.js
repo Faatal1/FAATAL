@@ -17,12 +17,10 @@ const arquivo = path.join(pasta, "casamentos.json")
 
 function lerCasamentos(){
 
-// cria pasta se não existir
 if(!fs.existsSync(pasta)){
 fs.mkdirSync(pasta,{recursive:true})
 }
 
-// cria arquivo se não existir
 if(!fs.existsSync(arquivo)){
 fs.writeFileSync(arquivo,"{}")
 }
@@ -37,13 +35,39 @@ return {}
 
 function salvarCasamentos(db){
 
-// garante pasta
 if(!fs.existsSync(pasta)){
 fs.mkdirSync(pasta,{recursive:true})
 }
 
 fs.writeFileSync(arquivo,JSON.stringify(db,null,2))
 
+}
+
+//━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🚫 SISTEMA BLOCK USER
+//━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const caminhoBlockUsers = "./arquivos/config/blockusers.json"
+
+if (!fs.existsSync(caminhoBlockUsers)) {
+fs.writeFileSync(caminhoBlockUsers, JSON.stringify([], null, 2))
+}
+
+function lerBlockUsers(){
+try{
+return JSON.parse(fs.readFileSync(caminhoBlockUsers))
+}catch{
+return []
+}
+}
+
+function salvarBlockUsers(lista){
+fs.writeFileSync(caminhoBlockUsers, JSON.stringify(lista, null, 2))
+}
+
+function usuarioBloqueado(user){
+let lista = lerBlockUsers()
+return lista.includes(user)
 }
 
 //━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1480,7 +1504,8 @@ const commandList = [
     "legendabv", "fotobv", "resetfotobv", "reset_legendabv",
     "meupar", "divorcio", "trair", "animememe", "wallpaper",
     "metadinha2", "hentai", "sugestão", "surubao", "grupo f", "grupo a",
-    "ranksafados", "rankfeio", "rankburro", "rankapaixonados"
+    "ranksafados", "rankfeio", "rankburro", "rankapaixonados", 
+    "blockuser", "unblockuser"
 ];
 
 
@@ -2856,12 +2881,52 @@ if (/(manda|envia|mostra|quero ver).*(foto|fotos|imagem|imagens)/i.test(body)) {
     }
 }
 
+//━━━━━━━━━━━━━━━━━━
+// 🎥 DOWNLOAD TIKTOK POR LINK
+//━━━━━━━━━━━━━━━━━━
+
+const matchTikTok = body.match(/https?:\/\/(vm|vt|www)?\.?tiktok\.com\/[^\s]+/i);
+
+if (matchTikTok) {
+
+const link = matchTikTok[0];
+
+// respostas humanas
+const respostas = [
+"já vou baixar esse vídeo aqui pra tu",
+"calma aí que já tô baixando",
+"já já te mando esse vídeo",
+"tô baixando aqui meu mano",
+"só um momento que te te mando o vídeo",
+"já tô baixando pra ti"
+];
+
+const msg = respostas[Math.floor(Math.random() * respostas.length)];
+
+await enviarComoHumano(client,msg,from,info);
+
+// download pela API
+const apiURL =
+`https://tokito-apis.site/api/tiktok-video?url=${encodeURIComponent(link)}&apikey=${data.apikey}`;
+
+await client.sendPresenceUpdate("composing", from);
+
+await new Promise(r => setTimeout(r,1200));
+
+await client.sendMessage(from,{
+video:{ url: apiURL },
+mimetype:"video/mp4"
+},{ quoted: info });
+
+return;
+}
+
 
 //━━━━━━━━━━━━━━━━━━
 // 🎥 TIKTOK MELHORADO
 //━━━━━━━━━━━━━━━━━━
 
-if (/(vídeo|video|tiktok)/i.test(body)) {
+if (/(vídeo|video|tiktok)/i.test(body) && !/tiktok\.com|vm\.tiktok\.com/.test(body)){
 
 const axios = require("axios");
 
@@ -3157,6 +3222,17 @@ executionLock.add(from);
 const args = body.slice(prefix.length).trim().split(/ +/);
 const comando = args.shift()?.toLowerCase();
 
+// 🚫 bloqueio de usuário
+if (usuarioBloqueado(sender) && !soDono) {
+executionLock.delete(from)
+
+await client.sendMessage(from,{
+text:"🚫 Você está bloqueado de usar comandos do bot."
+},{quoted:info})
+
+return
+}
+
 // 🔒 BLOQUEIO GLOBAL DE COMANDO
 if (!soDono && isCmdBlocked(comando)) {
     executionLock.delete(from);
@@ -3232,6 +3308,68 @@ const text = args.join(" ");
 ━━━━━━━━━━━━━━━━━━━━━━━━━━*/
 
 switch (comando) {
+
+case "blockuser": {
+
+if (!soDono) return reply("🚫 Apenas o dono pode usar.")
+
+let alvo =
+info.message?.extendedTextMessage?.contextInfo?.participant ||
+info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]
+
+if (!alvo) {
+return reply("❌ Marque a pessoa ou responda a mensagem dela.")
+}
+
+let lista = lerBlockUsers()
+
+if (lista.includes(alvo)) {
+return reply("⚠️ Esse usuário já está bloqueado.")
+}
+
+lista.push(alvo)
+salvarBlockUsers(lista)
+
+await client.sendMessage(from,{
+text:`🚫 Usuário bloqueado.
+
+@${alvo.split("@")[0]} não poderá usar comandos.`,
+mentions:[alvo]
+},{quoted:info})
+
+}
+break
+
+case "unblockuser": {
+
+if (!soDono) return reply("🚫 Apenas o dono pode usar.")
+
+let alvo =
+info.message?.extendedTextMessage?.contextInfo?.participant ||
+info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]
+
+if (!alvo) {
+return reply("❌ Marque ou responda a mensagem.")
+}
+
+let lista = lerBlockUsers()
+
+if (!lista.includes(alvo)) {
+return reply("⚠️ Esse usuário não está bloqueado.")
+}
+
+lista = lista.filter(u => u !== alvo)
+salvarBlockUsers(lista)
+
+await client.sendMessage(from,{
+text:`✅ Usuário desbloqueado.
+
+@${alvo.split("@")[0]} pode usar comandos novamente.`,
+mentions:[alvo]
+},{quoted:info})
+
+}
+break
 
 case "rankfeio": {
 
