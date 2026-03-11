@@ -37,7 +37,10 @@ iniciarSpinner,
 finalizarSpinner
 } = require('./arquivos/lib/functions');
 
-const { checkAndApplyUpdates } = require('./autoupdate');
+const { checkAndApplyUpdates, temAtualizacao } = require('./autoupdate')
+
+const args = process.argv.slice(2)
+const modoUpdate = args.includes("up")
 
 //━━━━━━━━━━━━━━━━━━
 // 🔒 PROTEGER DADOS DO USUÁRIO
@@ -335,14 +338,38 @@ console.log("⚠ Socket já ativo — ignorando duplicação");
 return;
 }
 
-// 🔄 VERIFICAÇÃO DE ATUALIZAÇÕES 
-// Se houver atualização, o bot faz o pull e encerra o processo para o start.sh reiniciar
-const updated = await checkAndApplyUpdates();
+//━━━━━━━━━━━━━━━━━━
+// 🔄 SISTEMA DE UPDATE INTELIGENTE
+//━━━━━━━━━━━━━━━━━━
+
+if (modoUpdate) {
+
+console.log(chalk.yellow("⬇ Verificando atualização..."))
+
+const updated = await checkAndApplyUpdates()
+
 if (updated) {
-    console.log(chalk.green('🚀 [Auto-Update] Reiniciando o bot para aplicar as novas alterações...'));
-    process.exit(0); // O loop no start.sh cuidará do reinício
+
+console.log(chalk.green("🚀 Atualização aplicada. Reinicie o bot."))
+process.exit(0)
+
 }
 
+} else {
+
+if (temAtualizacao()) {
+
+console.log(chalk.yellow(`
+⚠ Nova atualização disponível!
+
+Use o comando abaixo para atualizar o bot:
+
+npm start up
+`))
+
+}
+
+}
 
 global.botLigado = true;
 
